@@ -1,0 +1,156 @@
+# Généré depuis le catalogue du portail. À compléter au fil des spécifications.
+openapi: 3.1.0
+info:
+  title: CEGIT – Limites administratives
+  version: 0.1.0
+  description: 'Région, département, arrondissement et commune d''un point, ou géométrie d''une entité.
+
+
+    Statut : Prototype. Exemples de réponses fictifs.'
+  contact:
+    name: CEGIT
+    url: https://cegitgroup.com/fr
+    email: api@cegitgroup.com
+servers:
+- url: https://api.cegitgroup.com
+  description: Production (cible)
+- url: https://api-preprod.cegitgroup.com
+  description: Préproduction
+security:
+- apiKey: []
+tags:
+- name: Limites administratives
+  description: Référentiel CEGIT
+paths:
+  /v1/boundaries/lookup:
+    get:
+      summary: Trouver les entités d'un point
+      description: Intersection point dans polygone sur tous les niveaux administratifs.
+      operationId: v1_boundaries_lookup_get
+      tags:
+      - Limites administratives
+      responses:
+        '200':
+          description: Succès
+          content:
+            application/json:
+              example:
+                point:
+                - -17.4467
+                - 14.6928
+                region:
+                  code: '01'
+                  nom: Dakar
+                departement:
+                  code: '011'
+                  nom: Dakar
+                arrondissement:
+                  nom: Dakar-Plateau
+                commune:
+                  code: '01111'
+                  nom: Dakar-Plateau
+                millesime: '2024'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+      parameters:
+      - name: lat
+        in: query
+        required: true
+        description: Latitude (décimal)
+        schema:
+          type: number
+        example: '14.6928'
+      - name: lon
+        in: query
+        required: true
+        description: Longitude (décimal)
+        schema:
+          type: number
+        example: '-17.4467'
+  /v1/boundaries/{niveau}/{code}:
+    get:
+      summary: Géométrie d'une entité
+      description: Renvoie la géométrie simplifiée ou complète.
+      operationId: v1_boundaries_niveau_code_get
+      tags:
+      - Limites administratives
+      responses:
+        '200':
+          description: Succès
+          content:
+            application/json:
+              example:
+                type: Feature
+                id: '01111'
+                properties:
+                  niveau: commune
+                  nom: Dakar-Plateau
+                  superficie_km2: 5.4
+                geometry:
+                  type: MultiPolygon
+                  coordinates: '[…]'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+      parameters:
+      - name: niveau
+        in: path
+        required: true
+        description: region, departement, commune (texte)
+        schema:
+          type: string
+        example: commune
+      - name: code
+        in: path
+        required: true
+        description: Code de l'entité (texte)
+        schema:
+          type: string
+        example: '01111'
+      - name: simplify
+        in: query
+        required: false
+        description: Tolérance de simplification (mètres)
+        schema:
+          type: string
+        example: '50'
+components:
+  securitySchemes:
+    apiKey:
+      type: apiKey
+      in: header
+      name: X-API-Key
+  schemas:
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+  responses:
+    BadRequest:
+      description: Paramètre manquant ou invalide
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Unauthorized:
+      description: Clé absente ou invalide
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    TooManyRequests:
+      description: Quota dépassé (voir l'en-tête Retry-After)
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'

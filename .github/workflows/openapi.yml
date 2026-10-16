@@ -1,0 +1,18 @@
+# Vérifie que chaque spécification OpenAPI est valide.
+name: Valider les spécifications OpenAPI
+
+on:
+  push:
+    paths: ["openapi/**"]
+  pull_request:
+    paths: ["openapi/**"]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npx --yes @redocly/cli@1.25.0 lint openapi/*.yaml --skip-rule operation-4xx-problem-details-rfc7807 --skip-rule info-license

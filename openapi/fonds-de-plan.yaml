@@ -1,0 +1,92 @@
+# Généré depuis le catalogue du portail. À compléter au fil des spécifications.
+openapi: 3.1.0
+info:
+  title: CEGIT – Fonds de plan et tuiles
+  version: 0.1.0
+  description: 'Tuiles vectorielles et styles aux couleurs CEGIT pour MapLibre, QGIS et QWC2.
+
+
+    Statut : Prototype. Exemples de réponses fictifs.'
+  contact:
+    name: CEGIT
+    url: https://cegitgroup.com/fr
+    email: api@cegitgroup.com
+servers:
+- url: https://api.cegitgroup.com
+  description: Production (cible)
+- url: https://api-preprod.cegitgroup.com
+  description: Préproduction
+security:
+- apiKey: []
+tags:
+- name: Fonds de plan et tuiles
+  description: Cartographie
+paths:
+  /v1/tiles/{style}/style.json:
+    get:
+      summary: Style de carte
+      description: Style MapLibre prêt à l'emploi.
+      operationId: v1_tiles_style_style.json_get
+      tags:
+      - Fonds de plan et tuiles
+      responses:
+        '200':
+          description: Succès
+          content:
+            application/json:
+              example:
+                version: 8
+                name: cegit-clair
+                sources:
+                  cegit:
+                    type: vector
+                    tiles:
+                    - https://api.cegitgroup.com/v1/tiles/{z}/{x}/{y}.pbf
+                layers: '[…]'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+      parameters:
+      - name: style
+        in: path
+        required: true
+        description: cegit-clair, cegit-sombre (texte)
+        schema:
+          type: string
+        example: cegit-clair
+components:
+  securitySchemes:
+    apiKey:
+      type: apiKey
+      in: header
+      name: X-API-Key
+  schemas:
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+  responses:
+    BadRequest:
+      description: Paramètre manquant ou invalide
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Unauthorized:
+      description: Clé absente ou invalide
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    TooManyRequests:
+      description: Quota dépassé (voir l'en-tête Retry-After)
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'

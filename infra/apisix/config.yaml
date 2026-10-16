@@ -1,0 +1,15 @@
+# Configuration minimale d'APISIX (mode etcd). Les routes et le plugin key-auth seront déclarés par service.
+deployment:
+  role: traditional
+  role_traditional:
+    config_provider: etcd
+  etcd:
+    host:
+      - "http://etcd:2379"
+  admin:
+    admin_key:
+      - name: admin
+        key: ${{APISIX_ADMIN_KEY}}
+        role: admin
+apisix:
+  node_listen: 9080

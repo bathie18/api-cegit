@@ -1,0 +1,13 @@
+{$PORTAL_HOST} {
+	root * /srv/portal
+	file_server
+	header X-Robots-Tag "noindex, nofollow"
+}
+
+{$API_HOST} {
+	reverse_proxy apisix:9080
+}
+
+{$AUTH_HOST} {
+	reverse_proxy keycloak:8080
+}

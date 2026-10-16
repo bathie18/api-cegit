@@ -1,0 +1,98 @@
+# Squelette de la pile de préproduction (phase 1, phase 2 via le profil « phase2 »).
+# À compléter au fil des services : images à figer sur des versions précises avant la production.
+name: api-cegit
+
+services:
+  caddy:
+    image: caddy:2
+    restart: unless-stopped
+    ports: ["80:80", "443:443"]
+    volumes:
+      - ./caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - ../portal:/srv/portal:ro
+      - caddy_data:/data
+    depends_on: [apisix, keycloak]
+
+  postgis:
+    image: postgis/postgis:16-3.4
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: cegit
+      POSTGRES_USER: cegit
+      POSTGRES_PASSWORD: ${POSTGIS_PASSWORD}
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+      - ./postgis/init:/docker-entrypoint-initdb.d:ro
+
+  keycloak-db:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: keycloak
+      POSTGRES_USER: keycloak
+      POSTGRES_PASSWORD: ${KEYCLOAK_DB_PASSWORD}
+    volumes: [kc_data:/var/lib/postgresql/data]
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:25.0
+    restart: unless-stopped
+    command: start --proxy-headers xforwarded --hostname ${AUTH_HOST}
+    environment:
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://keycloak-db:5432/keycloak
+      KC_DB_USERNAME: keycloak
+      KC_DB_PASSWORD: ${KEYCLOAK_DB_PASSWORD}
+      KC_HTTP_ENABLED: "true"
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD}
+    depends_on: [keycloak-db]
+
+  etcd:
+    image: bitnami/etcd:3.5
+    restart: unless-stopped
+    environment:
+      ALLOW_NONE_AUTHENTICATION: "yes"
+      ETCD_ADVERTISE_CLIENT_URLS: http://etcd:2379
+
+  apisix:
+    image: apache/apisix:3.9.1-debian
+    restart: unless-stopped
+    volumes:
+      - ./apisix/config.yaml:/usr/local/apisix/conf/config.yaml:ro
+    environment:
+      APISIX_ADMIN_KEY: ${APISIX_ADMIN_KEY}
+    depends_on: [etcd]
+
+  pygeoapi:
+    image: geopython/pygeoapi:latest
+    restart: unless-stopped
+    volumes:
+      - ../services/referentiels/pygeoapi-config.yml:/pygeoapi/local.config.yml:ro
+    depends_on: [postgis]
+
+  martin:
+    image: ghcr.io/maplibre/martin:latest
+    restart: unless-stopped
+    command: --listen-addresses 0.0.0.0:3000
+    environment:
+      DATABASE_URL: postgresql://cegit:${POSTGIS_PASSWORD}@postgis:5432/cegit
+    depends_on: [postgis]
+
+  # metier:          # services FastAPI, à ajouter avec services/metier/Dockerfile
+  #   build: ../services/metier
+
+  valhalla:
+    profiles: [phase2]
+    image: ghcr.io/gis-ops/docker-valhalla/valhalla:latest
+    restart: unless-stopped
+    environment:
+      tile_urls: https://download.geofabrik.de/africa/senegal-and-gambia-latest.osm.pbf
+    volumes: [valhalla_data:/custom_files]
+
+  # pelias: phase 2, déploiement via le dépôt pelias/docker (plusieurs conteneurs)
+
+volumes:
+  pg_data:
+  kc_data:
+  caddy_data:
+  valhalla_data:

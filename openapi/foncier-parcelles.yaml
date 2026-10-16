@@ -1,0 +1,96 @@
+# Généré depuis le catalogue du portail. À compléter au fil des spécifications.
+openapi: 3.1.0
+info:
+  title: CEGIT – Foncier et parcelles
+  version: 0.1.0
+  description: 'Recherche de parcelles par point ou identifiant, avec contenance et références.
+
+
+    Statut : En spécification. Exemples de réponses fictifs.'
+  contact:
+    name: CEGIT
+    url: https://cegitgroup.com/fr
+    email: api@cegitgroup.com
+servers:
+- url: https://api.cegitgroup.com
+  description: Production (cible)
+- url: https://api-preprod.cegitgroup.com
+  description: Préproduction
+security:
+- apiKey: []
+tags:
+- name: Foncier et parcelles
+  description: Module CegitCAD+
+paths:
+  /v1/parcels:
+    get:
+      summary: Parcelle d'un point
+      description: Renvoie la parcelle et ses voisines immédiates.
+      operationId: v1_parcels_get
+      tags:
+      - Foncier et parcelles
+      responses:
+        '200':
+          description: Succès
+          content:
+            application/json:
+              example:
+                parcelle:
+                  reference: TH-000-0000
+                  contenance_m2: 300
+                voisines: 3
+                note: Données fictives de démonstration
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+      parameters:
+      - name: lat
+        in: query
+        required: true
+        description: Latitude (décimal)
+        schema:
+          type: number
+        example: '14.7910'
+      - name: lon
+        in: query
+        required: true
+        description: Longitude (décimal)
+        schema:
+          type: number
+        example: '-16.9256'
+components:
+  securitySchemes:
+    apiKey:
+      type: apiKey
+      in: header
+      name: X-API-Key
+  schemas:
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+  responses:
+    BadRequest:
+      description: Paramètre manquant ou invalide
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Unauthorized:
+      description: Clé absente ou invalide
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    TooManyRequests:
+      description: Quota dépassé (voir l'en-tête Retry-After)
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'

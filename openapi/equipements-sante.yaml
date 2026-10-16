@@ -1,0 +1,113 @@
+# Généré depuis le catalogue du portail. À compléter au fil des spécifications.
+openapi: 3.1.0
+info:
+  title: CEGIT – Équipements de santé
+  version: 0.1.0
+  description: 'Structures sanitaires, plateaux techniques et accessibilité de la population aux soins.
+
+
+    Statut : En spécification. Exemples de réponses fictifs.'
+  contact:
+    name: CEGIT
+    url: https://cegitgroup.com/fr
+    email: api@cegitgroup.com
+servers:
+- url: https://api.cegitgroup.com
+  description: Production (cible)
+- url: https://api-preprod.cegitgroup.com
+  description: Préproduction
+security:
+- apiKey: []
+tags:
+- name: Équipements de santé
+  description: Module C-Health
+paths:
+  /v1/health/facilities/nearby:
+    get:
+      summary: Structures les plus proches
+      description: Classées par temps d'accès réel, pas à vol d'oiseau.
+      operationId: v1_health_facilities_nearby_get
+      tags:
+      - Équipements de santé
+      responses:
+        '200':
+          description: Succès
+          content:
+            application/json:
+              example:
+                results:
+                - nom: Centre de santé (exemple A)
+                  type: centre
+                  acces_min: 6
+                - nom: Centre de santé (exemple B)
+                  type: centre
+                  acces_min: 11
+                note: Données fictives de démonstration
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+      parameters:
+      - name: lat
+        in: query
+        required: true
+        description: Latitude (décimal)
+        schema:
+          type: number
+        example: '14.7910'
+      - name: lon
+        in: query
+        required: true
+        description: Longitude (décimal)
+        schema:
+          type: number
+        example: '-16.9256'
+      - name: type
+        in: query
+        required: false
+        description: hopital, centre, poste (texte)
+        schema:
+          type: string
+        example: centre
+      - name: limit
+        in: query
+        required: false
+        description: limit (entier)
+        schema:
+          type: integer
+        example: '3'
+components:
+  securitySchemes:
+    apiKey:
+      type: apiKey
+      in: header
+      name: X-API-Key
+  schemas:
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+  responses:
+    BadRequest:
+      description: Paramètre manquant ou invalide
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Unauthorized:
+      description: Clé absente ou invalide
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    TooManyRequests:
+      description: Quota dépassé (voir l'en-tête Retry-After)
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'

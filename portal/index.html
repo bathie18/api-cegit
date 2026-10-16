@@ -1,0 +1,650 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Portail API CEGIT</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="Portail développeurs des API géospatiales du CEGIT : catalogue, documentation, console d'essai.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@400;500;700&family=Ubuntu+Mono:wght@400;700&family=Open+Sans:wght@400;600;700&display=swap">
+<style>
+/* Layout : bandeau de marque blanc (comme carto-cegit-map), introduction anthracite avec recherche + appel type,
+   catalogue = colonne de familles + grille de fiches API ; fiche API = endpoints à gauche, console d'essai à droite. */
+:root{
+  /* Charte CEGIT : orange #F39200, anthracite #3C3C3B, Ubuntu / Open Sans (reprise de carto-cegit-map) */
+  --bg:#F6F6F4; --surface:#FFFFFF; --soft:#EEEEEB; --line:#E2E2DE;
+  --fg:#2B2B2A; --muted:#5A5A57;
+  --brand:#3C3C3B; --brand-deep:#2B2B2A; --on-brand:#FFFFFF; --on-brand-muted:#D9D9D6;
+  --accent:#F39200; --accent-strong:#D46F00; --accent-soft:#FDEBD3; --accent-ink:#8A4700;
+  --head-bg:#FFFFFF; --head-fg:#3C3C3B;
+  --code-bg:#2B2B2A; --code-fg:#EDEDEA; --code-key:#F7B866; --code-str:#A9D18E; --code-num:#8FC1F0; --code-dim:#9A9A94;
+  --get:#2E7D4F; --get-soft:#E1F1E7; --post:#2563A8; --post-soft:#E1ECF8;
+  --ok:#2E7D4F; --warn:#9A6200; --warn-soft:#FBEFD8; --plan:#5A5A57; --plan-soft:#EEEEEB;
+  --footer:#2B2B2A; --footer-fg:#D6D6D2;
+  --shadow:0 10px 24px rgba(30,30,30,.10);
+  --f-display:"Ubuntu",system-ui,sans-serif; --f-body:"Open Sans",system-ui,sans-serif; --f-mono:"Ubuntu Mono",ui-monospace,Consolas,monospace;
+  --r:10px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#161615; --surface:#1F1F1E; --soft:#2A2A28; --line:#353533;
+  --fg:#EDEDEA; --muted:#B0B0AB;
+  --brand:#2A2A28; --brand-deep:#121211; --on-brand:#FFFFFF; --on-brand-muted:#C9C9C5;
+  --accent:#F39200; --accent-strong:#F5A33A; --accent-soft:#3A2A18; --accent-ink:#F7B866;
+  --head-bg:#1F1F1E; --head-fg:#EDEDEA;
+  --code-bg:#121211; --code-fg:#EDEDEA; --code-key:#F7B866; --code-str:#A9D18E; --code-num:#8FC1F0; --code-dim:#8A8A84;
+  --get:#7BC79A; --get-soft:#1E3326; --post:#8FC1F0; --post-soft:#1C2C3F;
+  --ok:#7BC79A; --warn:#F7B866; --warn-soft:#3A2A18; --plan:#B0B0AB; --plan-soft:#2A2A28;
+  --footer:#0F0F0E; --footer-fg:#C9C9C5; --shadow:0 10px 24px rgba(0,0,0,.45); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#161615; --surface:#1F1F1E; --soft:#2A2A28; --line:#353533;
+  --fg:#EDEDEA; --muted:#B0B0AB;
+  --brand:#2A2A28; --brand-deep:#121211; --on-brand:#FFFFFF; --on-brand-muted:#C9C9C5;
+  --accent:#F39200; --accent-strong:#F5A33A; --accent-soft:#3A2A18; --accent-ink:#F7B866;
+  --head-bg:#1F1F1E; --head-fg:#EDEDEA;
+  --code-bg:#121211; --code-fg:#EDEDEA; --code-key:#F7B866; --code-str:#A9D18E; --code-num:#8FC1F0; --code-dim:#8A8A84;
+  --get:#7BC79A; --get-soft:#1E3326; --post:#8FC1F0; --post-soft:#1C2C3F;
+  --ok:#7BC79A; --warn:#F7B866; --warn-soft:#3A2A18; --plan:#B0B0AB; --plan-soft:#2A2A28;
+  --footer:#0F0F0E; --footer-fg:#C9C9C5; --shadow:0 10px 24px rgba(0,0,0,.45); color-scheme:dark}
+
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font:15px/1.6 var(--f-body)}
+a{color:var(--accent-ink)}
+h1,h2,h3,h4{font-family:var(--f-display);text-wrap:balance;margin:0;line-height:1.2}
+code,pre,.mono{font-family:var(--f-mono)}
+button{font:inherit;cursor:pointer}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.wrap{max-width:1240px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.ico{fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none}
+
+/* En-tête */
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--head-bg);color:var(--head-fg);border-bottom:1px solid var(--line)}
+.top .wrap{display:flex;align-items:center;gap:20px;min-height:64px;flex-wrap:wrap;padding-block:8px}
+.brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:inherit}
+.brand-mark{width:38px;height:38px;border-radius:9px;background:var(--accent);color:#FFFFFF;display:grid;place-items:center}
+.brand-name{font-family:var(--f-display);font-size:20px;font-weight:500;letter-spacing:-.01em}
+.brand-name b{color:var(--accent);font-weight:700}
+.brand-sub{display:block;font-size:12px;color:var(--muted);line-height:1.1}
+.nav{display:flex;align-items:center;gap:4px;margin-left:auto;flex-wrap:wrap}
+.nav button{background:none;border:0;color:inherit;padding:8px 12px;border-radius:8px;font-weight:600;font-size:14px}
+.nav button:hover{background:var(--soft)}
+.nav button[aria-current="page"]{color:var(--accent-ink);box-shadow:inset 0 -2px 0 var(--accent)}
+.btn{display:inline-flex;align-items:center;gap:8px;border-radius:8px;padding:9px 16px;font-weight:600;font-size:14px;border:1px solid transparent;text-decoration:none}
+.btn-primary{background:var(--accent);color:#2B2B2A;border-color:var(--accent)}
+.btn-primary:hover{background:var(--accent-strong);border-color:var(--accent-strong)}
+.btn-ghost{background:transparent;color:inherit;border-color:var(--line)}
+.btn-ghost:hover{border-color:var(--accent)}
+
+/* Introduction */
+.intro{background:var(--brand);color:var(--on-brand)}
+.intro .wrap{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:40px;padding-block:44px 48px;align-items:center}
+.eyebrow{font-family:var(--f-display);font-size:12px;text-transform:uppercase;letter-spacing:.12em;color:var(--accent);font-weight:700}
+.intro h1{font-size:clamp(28px,4vw,42px);font-weight:700;margin:10px 0 14px;letter-spacing:-.015em}
+.intro h1 em{font-style:normal;color:var(--accent)}
+.intro p{color:var(--on-brand-muted);max-width:56ch;margin:0 0 22px}
+.search{display:flex;background:#FFFFFF;border-radius:10px;overflow:hidden;max-width:560px}
+.search svg{margin:0 4px 0 14px;align-self:center;color:#5A5A57}
+.search input{flex:1;min-width:0;border:0;padding:14px 10px;font:inherit;color:#2B2B2A;background:#FFFFFF}
+.search input:focus{outline:none}
+.search:focus-within{outline:3px solid var(--accent)}
+.intro-stats{display:flex;gap:28px;margin-top:22px;flex-wrap:wrap;font-size:13px;color:var(--on-brand-muted)}
+.intro-stats b{display:block;font-family:var(--f-display);font-size:22px;color:var(--on-brand)}
+.term{background:var(--brand-deep);border-radius:12px;border:1px solid rgba(255,255,255,.08);box-shadow:var(--shadow);min-width:0}
+.term-bar{display:flex;align-items:center;gap:6px;padding:10px 14px;border-bottom:1px solid rgba(255,255,255,.08);font-size:12px;color:#B0B0AB}
+.term-bar i{width:10px;height:10px;border-radius:50%;background:#55554F;display:inline-block}
+.term-bar i:first-child{background:var(--accent)}
+.term-bar span{margin-left:8px}
+.term pre{margin:0;padding:16px 18px;overflow-x:auto;font-size:14px;line-height:1.55;color:#EDEDEA}
+
+/* Bandeau démarrage */
+.steps{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin:-26px 0 0;position:relative}
+.step{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:18px 20px;box-shadow:var(--shadow);display:flex;gap:14px}
+.step-n{font-family:var(--f-display);font-weight:700;color:var(--accent);font-size:26px;line-height:1}
+.step h3{font-size:16px;margin-bottom:4px}
+.step p{margin:0;font-size:14px;color:var(--muted)}
+
+/* Catalogue */
+.section{padding-block:40px}
+.sec-head{display:flex;align-items:end;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:20px}
+.sec-head h2{font-size:26px}
+.sec-head p{margin:4px 0 0;color:var(--muted)}
+.catalog{display:grid;grid-template-columns:240px minmax(0,1fr);gap:28px;align-items:start}
+.fams{position:sticky;top:calc(env(safe-area-inset-top,0px) + 84px);display:flex;flex-direction:column;gap:2px}
+.fams h3{font-size:12px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin:0 0 8px 10px}
+.fam{display:flex;justify-content:space-between;align-items:center;gap:8px;text-align:left;background:none;border:0;color:var(--fg);padding:9px 10px;border-radius:8px;font-size:14px}
+.fam:hover{background:var(--soft)}
+.fam[aria-pressed="true"]{background:var(--accent-soft);color:var(--accent-ink);font-weight:600}
+.fam small{font-variant-numeric:tabular-nums;color:var(--muted);font-size:12px}
+.filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+.chip{border:1px solid var(--line);background:var(--surface);color:var(--fg);border-radius:999px;padding:5px 12px;font-size:13px}
+.chip[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft);color:var(--accent-ink);font-weight:600}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:16px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:18px;display:flex;flex-direction:column;gap:10px;text-align:left;color:inherit;transition:border-color .15s,transform .15s}
+.card:hover{border-color:var(--accent);transform:translateY(-2px)}
+.card-top{display:flex;align-items:center;gap:12px}
+.card-ico{width:40px;height:40px;border-radius:9px;background:var(--accent-soft);color:var(--accent-ink);display:grid;place-items:center}
+.card h3{font-size:17px}
+.card .mod{font-size:12px;color:var(--muted)}
+.card p{margin:0;font-size:14px;color:var(--muted);flex:1}
+.card-foot{display:flex;justify-content:space-between;align-items:center;gap:8px;border-top:1px solid var(--line);padding-top:10px;font-size:12px}
+.card-foot code{color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.pill{display:inline-flex;align-items:center;gap:5px;border-radius:999px;padding:2px 9px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;white-space:nowrap}
+.pill::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.st-beta{background:var(--warn-soft);color:var(--warn)}
+.st-spec{background:var(--plan-soft);color:var(--plan)}
+.st-proto{background:var(--get-soft);color:var(--ok)}
+.empty{padding:30px;border:1px dashed var(--line);border-radius:var(--r);color:var(--muted);text-align:center}
+
+/* Stack */
+.stack{background:var(--surface);border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.layers{display:grid;gap:10px}
+.layer{display:grid;grid-template-columns:200px minmax(0,1fr);gap:16px;align-items:center;padding:14px 16px;border:1px solid var(--line);border-radius:var(--r);background:var(--bg)}
+.layer h4{font-size:15px}
+.layer h4 small{display:block;font-family:var(--f-body);font-weight:400;color:var(--muted);font-size:12px}
+.tools{display:flex;gap:8px;flex-wrap:wrap}
+.tool{font-family:var(--f-mono);font-size:13px;background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:3px 9px}
+.tool b{color:var(--accent-ink);font-weight:700}
+.licence{font-size:11px;color:var(--muted);margin-left:4px}
+
+/* Offres */
+.plans{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+.plan{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:22px;display:flex;flex-direction:column;gap:10px}
+.plan.feat{border:2px solid var(--accent)}
+.plan h3{font-size:18px}
+.plan .price{font-family:var(--f-display);font-size:28px;font-weight:700}
+.plan .price small{font-size:13px;font-weight:400;color:var(--muted)}
+.plan ul{margin:0;padding-left:18px;color:var(--muted);font-size:14px;flex:1}
+.plan li{margin:4px 0}
+
+/* Fiche API */
+.crumb{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted);margin-bottom:14px;flex-wrap:wrap}
+.crumb button{background:none;border:0;padding:0;color:var(--accent-ink);font-weight:600}
+.api-head{display:flex;gap:18px;align-items:flex-start;flex-wrap:wrap;margin-bottom:22px}
+.api-head .card-ico{width:56px;height:56px;border-radius:12px}
+.api-head h1{font-size:30px}
+.api-head p{margin:6px 0 0;color:var(--muted);max-width:70ch}
+.meta{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;align-items:center}
+.tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);margin-bottom:22px;overflow-x:auto}
+.tabs button{background:none;border:0;padding:10px 14px;color:var(--muted);font-weight:600;white-space:nowrap;border-bottom:2px solid transparent;margin-bottom:-1px}
+.tabs button[aria-selected="true"]{color:var(--fg);border-bottom-color:var(--accent)}
+.api-body{display:grid;grid-template-columns:260px minmax(0,1fr);gap:24px;align-items:start}
+.eps{display:flex;flex-direction:column;gap:4px}
+.ep{display:flex;align-items:center;gap:8px;background:none;border:1px solid transparent;border-radius:8px;padding:8px 10px;text-align:left;color:var(--fg);font-size:13px;min-width:0}
+.ep:hover{background:var(--soft)}
+.ep[aria-pressed="true"]{background:var(--surface);border-color:var(--line);box-shadow:var(--shadow)}
+.ep code{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.m{font-family:var(--f-mono);font-size:11px;font-weight:700;border-radius:4px;padding:1px 6px;flex:none}
+.m-GET{background:var(--get-soft);color:var(--get)}
+.m-POST{background:var(--post-soft);color:var(--post)}
+.panel{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:20px}
+.box{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:20px;min-width:0}
+.box h3{font-size:18px;margin-bottom:6px}
+.url{display:flex;gap:8px;align-items:center;font-family:var(--f-mono);font-size:14px;background:var(--soft);border-radius:8px;padding:8px 10px;overflow-x:auto;white-space:nowrap}
+.tbl-wrap{overflow-x:auto;margin-top:14px}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th{text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);padding:6px 8px;border-bottom:1px solid var(--line)}
+td{padding:8px;border-bottom:1px solid var(--line);vertical-align:top}
+td code{font-size:14px;color:var(--accent-ink);font-weight:700}
+td .req{font-size:11px;color:var(--warn);font-weight:700;margin-left:4px}
+.field{display:flex;flex-direction:column;gap:4px;margin-bottom:10px}
+.field label{font-size:12px;font-weight:600;color:var(--muted)}
+.field input,.field select{font:14px var(--f-mono);padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--fg);width:100%}
+.code-tabs{display:flex;gap:4px;margin:14px 0 0}
+.code-tabs button{background:var(--soft);border:0;border-radius:6px 6px 0 0;padding:6px 12px;font-size:13px;color:var(--muted)}
+.code-tabs button[aria-selected="true"]{background:var(--code-bg);color:var(--code-fg)}
+.code{position:relative;background:var(--code-bg);color:var(--code-fg);border-radius:0 8px 8px 8px;min-width:0}
+.code pre{margin:0;padding:14px 16px;overflow:auto;max-height:340px;font-size:13.5px;line-height:1.5}
+.code .copy{position:absolute;top:8px;right:8px;background:rgba(255,255,255,.08);color:var(--code-fg);border:0;border-radius:6px;padding:4px 9px;font-size:12px}
+.k{color:var(--code-key)} .s{color:var(--code-str)} .n{color:var(--code-num)} .d{color:var(--code-dim)}
+.resp-head{display:flex;justify-content:space-between;align-items:center;gap:8px;margin:14px 0 6px;font-size:13px;flex-wrap:wrap}
+.status{font-family:var(--f-mono);font-weight:700;color:var(--ok)}
+.sim{font-size:12px;color:var(--muted)}
+.doc{max-width:72ch}
+.doc h3{font-size:18px;margin:18px 0 6px}
+.doc p,.doc li{color:var(--muted)}
+.errs td:first-child{font-family:var(--f-mono);font-weight:700}
+
+/* Pied de page */
+.foot{background:var(--footer);color:var(--footer-fg);margin-top:40px}
+.foot .wrap{display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr;gap:28px;padding-block:36px}
+.foot h2{font-size:14px;color:#FFFFFF;margin-bottom:10px}
+.foot ul{list-style:none;margin:0;padding:0;font-size:14px;display:grid;gap:6px}
+.foot a{color:var(--footer-fg);text-decoration:none}
+.foot a:hover{color:var(--accent)}
+.foot p{font-size:14px;margin:8px 0 0}
+.foot-bottom{border-top:1px solid rgba(255,255,255,.1)}
+.foot-bottom .wrap{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;padding-block:14px;font-size:13px}
+
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--brand-deep);color:#FFFFFF;padding:10px 16px;border-radius:8px;font-size:14px;box-shadow:var(--shadow);z-index:50}
+
+@media (max-width:960px){
+  .intro .wrap{grid-template-columns:1fr}
+  .catalog,.api-body{grid-template-columns:1fr}
+  .fams{position:static;flex-direction:row;flex-wrap:wrap}
+  .fams h3{display:none}
+  .fam{border:1px solid var(--line)}
+  .eps{flex-direction:row;overflow-x:auto}
+  .ep{flex:none}
+  .panel{grid-template-columns:1fr}
+  .plans,.steps{grid-template-columns:1fr}
+  .foot .wrap{grid-template-columns:1fr 1fr}
+  .layer{grid-template-columns:1fr}
+}
+@media (max-width:560px){ .foot .wrap{grid-template-columns:1fr} .nav{margin-left:0} }
+@media (prefers-reduced-motion:reduce){ .card{transition:none} .card:hover{transform:none} }
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="wrap">
+    <a class="brand" href="#catalogue" id="home">
+      <span class="brand-mark"><svg viewBox="0 0 24 24" width="22" height="22" class="ico" aria-hidden="true"><path d="M12 21s7-6 7-12a7 7 0 0 0-14 0c0 6 7 12 7 12zM12 11a2 2 0 1 0 0-4 2 2 0 0 0 0 4z"/></svg></span>
+      <span><span class="brand-name">api-<b>cegit</b></span><span class="brand-sub">Portail développeurs · géodonnées</span></span>
+    </a>
+    <nav class="nav" aria-label="Navigation principale">
+      <button type="button" data-go="catalogue" aria-current="page">API</button>
+      <button type="button" data-go="stack">Architecture</button>
+      <button type="button" data-go="offres">Offres</button>
+      <button type="button" data-go="aide">Documentation</button>
+      <button type="button" class="btn btn-ghost" id="btn-login" style="margin-left:6px">Se connecter</button>
+      <button type="button" class="btn btn-primary" id="btn-key">Obtenir une clé</button>
+    </nav>
+  </div>
+</header>
+
+<main id="view-home">
+  <section class="intro">
+    <div class="wrap">
+      <div>
+        <span class="eyebrow">Géodonnées du Sénégal et de l'Afrique de l'Ouest</span>
+        <h1>Localisez, enrichissez, décidez avec les <em>API&nbsp;CEGIT</em></h1>
+        <p>Adresses, limites administratives, équipements, foncier, risques : des services REST documentés, bâtis sur une pile 100&nbsp;% open source et déployables chez vous ou hébergés par le CEGIT.</p>
+        <form class="search" id="search-form" role="search">
+          <svg viewBox="0 0 24 24" width="20" height="20" class="ico" aria-hidden="true"><path d="M11 18a7 7 0 1 0 0-14 7 7 0 0 0 0 14zM20 20l-4-4"/></svg>
+          <input id="q" type="search" placeholder="Rechercher une API : adresse, isochrone, parcelle…" aria-label="Rechercher une API">
+        </form>
+        <div class="intro-stats" id="stats"></div>
+      </div>
+      <div class="term" aria-label="Exemple d'appel">
+        <div class="term-bar"><i></i><i></i><i></i><span>Géocoder une adresse à Thiès</span></div>
+        <pre id="hero-code"></pre>
+      </div>
+    </div>
+  </section>
+
+  <div class="wrap">
+    <div class="steps">
+      <div class="step"><span class="step-n">1</span><div><h3>Créez votre compte</h3><p>Accès bac à sable immédiat, sans carte bancaire.</p></div></div>
+      <div class="step"><span class="step-n">2</span><div><h3>Générez une clé d'API</h3><p>Une clé par application, révocable, avec quotas visibles.</p></div></div>
+      <div class="step"><span class="step-n">3</span><div><h3>Appelez le service</h3><p>REST/JSON, GeoJSON, OGC API. Essayez depuis la console.</p></div></div>
+    </div>
+  </div>
+
+  <section class="section" id="catalogue">
+    <div class="wrap">
+      <div class="sec-head">
+        <div><h2>Catalogue des API</h2><p>Chaque fiche décrit les points d'accès, les paramètres et une console d'essai.</p></div>
+        <div class="filters" id="status-filters" aria-label="Filtrer par statut"></div>
+      </div>
+      <div class="catalog">
+        <aside class="fams" id="fams" aria-label="Familles d'API"></aside>
+        <div><div class="grid" id="grid"></div></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section stack" id="stack">
+    <div class="wrap">
+      <div class="sec-head"><div><h2>Une pile 100&nbsp;% open source</h2><p>Chaque couche est remplaçable et hébergeable sur votre propre infrastructure.</p></div></div>
+      <div class="layers" id="layers"></div>
+    </div>
+  </section>
+
+  <section class="section" id="offres">
+    <div class="wrap">
+      <div class="sec-head"><div><h2>Offres</h2><p>Facturation en crédits : un appel simple consomme 1 crédit, un calcul d'itinéraire ou d'isochrone 5 crédits.</p></div></div>
+      <div class="plans">
+        <div class="plan"><h3>Découverte</h3><div class="price">Gratuit</div><ul><li>2 000 crédits par mois</li><li>Bac à sable et données de démonstration</li><li>10 requêtes par seconde</li></ul><button class="btn btn-ghost" type="button" data-key>Créer un compte</button></div>
+        <div class="plan feat"><span class="eyebrow">Collectivités et PME</span><h3>Territoire</h3><div class="price">Sur devis <small>/ an</small></div><ul><li>Volume de crédits adapté</li><li>Données de production mises à jour</li><li>Support en français, SLA 99,5&nbsp;%</li></ul><button class="btn btn-primary" type="button" data-contact>Demander un devis</button></div>
+        <div class="plan"><h3>Souverain</h3><div class="price">Déploiement <small>sur site</small></div><ul><li>Installation sur vos serveurs</li><li>Transfert de compétences et formation</li><li>Aucune dépendance à un service tiers</li></ul><button class="btn btn-ghost" type="button" data-contact>Nous contacter</button></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="aide">
+    <div class="wrap doc">
+      <h2 style="font-size:26px">Bien démarrer</h2>
+      <h3>Authentification</h3>
+      <p>Chaque appel transmet la clé dans l'en-tête <code>X-API-Key</code>. Les applications serveur peuvent aussi utiliser un jeton OAuth2 (flux <i>client credentials</i>) délivré par le serveur d'identité.</p>
+      <h3>Formats</h3>
+      <p>Les réponses sont en JSON. Les objets géographiques suivent GeoJSON (RFC 7946) en WGS&nbsp;84 (EPSG:4326). Le paramètre <code>crs=32628</code> renvoie les coordonnées en UTM zone 28N, système de référence courant au Sénégal.</p>
+      <h3>Codes d'erreur</h3>
+      <div class="tbl-wrap"><table class="errs"><thead><tr><th>Code</th><th>Signification</th></tr></thead><tbody>
+        <tr><td>400</td><td>Paramètre manquant ou mal formé. Le message précise lequel.</td></tr>
+        <tr><td>401</td><td>Clé absente ou invalide.</td></tr>
+        <tr><td>403</td><td>Clé valide mais API non incluse dans votre offre.</td></tr>
+        <tr><td>429</td><td>Quota dépassé. L'en-tête <code>Retry-After</code> indique le délai.</td></tr>
+        <tr><td>503</td><td>Service en maintenance. Consultez la page d'état.</td></tr>
+      </tbody></table></div>
+    </div>
+  </section>
+</main>
+
+<main id="view-api" hidden>
+  <div class="wrap section" id="api-root"></div>
+</main>
+
+<footer class="foot">
+  <div class="wrap">
+    <div>
+      <span class="brand-name" style="color:#FFFFFF">api-<b>cegit</b></span>
+      <p>Services géospatiaux conçus par le CEGIT, Centre d'Expertise en Géomatique et Ingénierie Territoriale.</p>
+    </div>
+    <nav aria-label="Développeurs"><h2>Développeurs</h2><ul><li><a href="#catalogue" data-go="catalogue">Catalogue des API</a></li><li><a href="#aide" data-go="aide">Documentation</a></li><li><a href="#stack" data-go="stack">Architecture</a></li><li><a href="#aide" data-go="aide">Codes d'erreur</a></li></ul></nav>
+    <nav aria-label="Ressources"><h2>Ressources</h2><ul><li><a href="https://cegitgroup.com/fr" target="_blank" rel="noopener">Site du CEGIT</a></li><li><a href="https://eos866.github.io/carto-cegit-map/" target="_blank" rel="noopener">carto-cegit-map</a></li><li><a href="https://ogcapi.ogc.org/" target="_blank" rel="noopener">Standards OGC API</a></li><li><a href="https://www.openstreetmap.org" target="_blank" rel="noopener">OpenStreetMap</a></li></ul></nav>
+    <div><h2>Contact</h2><ul><li>api@cegitgroup.com</li><li>Support du lundi au vendredi</li></ul></div>
+  </div>
+  <div class="foot-bottom"><div class="wrap"><span>© 2026 CEGIT · Mentions légales · Confidentialité</span><span>Données © contributeurs OpenStreetMap et partenaires</span></div></div>
+</footer>
+
+<div class="toast" id="toast" hidden></div>
+
+<script>
+const I = {
+  pin:"M12 21s7-6 7-12a7 7 0 0 0-14 0c0 6 7 12 7 12zM12 11a2 2 0 1 0 0-4 2 2 0 0 0 0 4z",
+  type:"M4 7V5h16v2M9 19h6M12 5v14",
+  shape:"M4 4l7 3 9-2-2 9 2 6-8-2-8 2 2-8z",
+  route:"M6 19a2 2 0 1 0 0-4 2 2 0 0 0 0 4zM18 9a2 2 0 1 0 0-4 2 2 0 0 0 0 4zM6 15V9a3 3 0 0 1 3-3h7M18 9v6a3 3 0 0 1-3 3H8",
+  iso:"M12 12m-2 0a2 2 0 1 0 4 0a2 2 0 1 0-4 0M12 12m-6 0a6 6 0 1 0 12 0a6 6 0 1 0-12 0M12 12m-10 0a10 10 0 1 0 20 0a10 10 0 1 0-20 0",
+  health:"M10 4h4v6h6v4h-6v6h-4v-6H4v-4h6z",
+  school:"M2 9l10-5 10 5-10 5zM6 11v5c3 2 9 2 12 0v-5",
+  build:"M4 21V8l8-5 8 5v13M9 21v-6h6v6",
+  parcel:"M3 3h8v8H3zM13 3h8v8h-8zM3 13h8v8H3zM13 13h8v8h-8z",
+  urba:"M3 21h18M5 21V10h4v11M10 21V4h4v17M15 21v-8h4v8",
+  flood:"M2 16c2 0 2-2 4-2s2 2 4 2 2-2 4-2 2 2 4-2 2 2 4 2M2 20c2 0 2-2 4-2s2 2 4 2 2-2 4-2 2 2 4 2 2-2 4-2M12 3l4 6a4 4 0 1 1-8 0z",
+  leaf:"M5 19c0-9 6-14 15-14 0 9-5 15-14 15M5 19l7-7",
+  tiles:"M12 3l9 5-9 5-9-5zM3 13l9 5 9-5M3 17l9 5 9-5"
+};
+const svg=(d,s=20)=>`<svg viewBox="0 0 24 24" width="${s}" height="${s}" class="ico" aria-hidden="true"><path d="${d}"/></svg>`;
+const STATUS={proto:["Prototype","st-proto"],beta:["Bêta","st-beta"],spec:["En spécification","st-spec"]};
+const FAMS=["Adresse et localisation","Référentiels territoriaux","Mobilité","Équipements et services","Foncier et urbanisme","Risques et environnement","Cartographie"];
+
+/* Catalogue proposé : à remplacer par les descriptions fonctionnelles de chaque API. */
+const APIS=[
+ {id:"gindi-geocodage",name:"GINDI Géocodage",mod:"Module GINDI",fam:0,ico:"pin",st:"proto",
+  desc:"Convertit une adresse, un lieu-dit ou un repère en coordonnées, et l'inverse.",
+  stack:["Pelias","PostGIS","FastAPI"],
+  eps:[
+   {m:"GET",p:"/v1/geocode",t:"Géocoder une adresse",d:"Renvoie les candidats classés par score de confiance.",
+    q:[["q","texte","Adresse ou nom de lieu",true,"Avenue Léopold Sédar Senghor, Thiès"],["country","code ISO","Pays de recherche","","SN"],["limit","entier","Nombre de résultats (1 à 20)","","3"]],
+    r:p=>({type:"FeatureCollection",query:p.q,features:[{type:"Feature",geometry:{type:"Point",coordinates:[-16.9256,14.7910]},properties:{label:"Avenue Léopold Sédar Senghor, Thiès",commune:"Thiès-Nord",departement:"Thiès",region:"Thiès",precision:"rue",score:0.94,gindi_code:"TH-N-0412"}}]})},
+   {m:"GET",p:"/v1/reverse",t:"Géocodage inverse",d:"Renvoie l'adresse la plus proche d'un point.",
+    q:[["lat","décimal","Latitude WGS 84",true,"14.7910"],["lon","décimal","Longitude WGS 84",true,"-16.9256"]],
+    r:p=>({type:"Feature",geometry:{type:"Point",coordinates:[+p.lon,+p.lat]},properties:{label:"Avenue Léopold Sédar Senghor, Thiès",distance_m:18,commune:"Thiès-Nord",gindi_code:"TH-N-0412"}})}
+  ]},
+ {id:"gindi-autocompletion",name:"GINDI Autocomplétion",mod:"Module GINDI",fam:0,ico:"type",st:"beta",
+  desc:"Suggestions d'adresses à la frappe pour les formulaires web et mobiles.",
+  stack:["Pelias","Elasticsearch / OpenSearch"],
+  eps:[{m:"GET",p:"/v1/autocomplete",t:"Suggérer des adresses",d:"Réponse en moins de 100 ms, pensée pour un appel à chaque frappe.",
+    q:[["text","texte","Début de saisie",true,"Marché Mo"],["focus.lat","décimal","Point de priorité","","14.7910"],["focus.lon","décimal","","","-16.9256"]],
+    r:p=>({query:p.text,suggestions:[{label:"Marché Moussanté, Thiès",type:"lieu",score:0.91},{label:"Rue du Marché Moussanté, Thiès",type:"rue",score:0.84},{label:"Marché Moderne, Mbour",type:"lieu",score:0.62}]})}]},
+ {id:"limites-administratives",name:"Limites administratives",mod:"Référentiel CEGIT",fam:1,ico:"shape",st:"proto",
+  desc:"Région, département, arrondissement et commune d'un point, ou géométrie d'une entité.",
+  stack:["PostGIS","pygeoapi","OGC API Features"],
+  eps:[
+   {m:"GET",p:"/v1/boundaries/lookup",t:"Trouver les entités d'un point",d:"Intersection point dans polygone sur tous les niveaux administratifs.",
+    q:[["lat","décimal","Latitude",true,"14.6928"],["lon","décimal","Longitude",true,"-17.4467"]],
+    r:p=>({point:[+p.lon,+p.lat],region:{code:"01",nom:"Dakar"},departement:{code:"011",nom:"Dakar"},arrondissement:{nom:"Dakar-Plateau"},commune:{code:"01111",nom:"Dakar-Plateau"},millesime:"2024"})},
+   {m:"GET",p:"/v1/boundaries/{niveau}/{code}",t:"Géométrie d'une entité",d:"Renvoie la géométrie simplifiée ou complète.",
+    q:[["niveau","texte","region, departement, commune",true,"commune"],["code","texte","Code de l'entité",true,"01111"],["simplify","mètres","Tolérance de simplification","","50"]],
+    r:p=>({type:"Feature",id:p.code,properties:{niveau:p.niveau,nom:"Dakar-Plateau",superficie_km2:5.4},geometry:{type:"MultiPolygon",coordinates:"[…]"}})}
+  ]},
+ {id:"itineraires-isochrones",name:"Itinéraires et isochrones",mod:"Mobilité",fam:2,ico:"iso",st:"beta",
+  desc:"Temps de parcours, itinéraires et zones accessibles en voiture, à pied ou en deux-roues.",
+  stack:["Valhalla","OSRM","OpenStreetMap"],
+  eps:[
+   {m:"GET",p:"/v1/isochrone",t:"Zone accessible en N minutes",d:"Polygones d'accessibilité depuis un point, pour plusieurs durées.",
+    q:[["lat","décimal","Latitude",true,"14.7910"],["lon","décimal","Longitude",true,"-16.9256"],["minutes","liste","Durées séparées par des virgules",true,"10,20,30"],["mode","texte","auto, pedestrian, motorcycle","","auto"]],
+    r:p=>({type:"FeatureCollection",features:String(p.minutes).split(",").map(m=>({type:"Feature",properties:{minutes:+m,mode:p.mode,population_estimee:Math.round(9000*m*m/10)},geometry:{type:"Polygon",coordinates:"[…]"}}))})},
+   {m:"POST",p:"/v1/route",t:"Calculer un itinéraire",d:"Itinéraire entre deux points ou plus, avec instructions en français.",
+    q:[["from","lat,lon","Départ",true,"14.6928,-17.4467"],["to","lat,lon","Arrivée",true,"14.7910,-16.9256"],["mode","texte","auto, pedestrian","","auto"]],
+    r:p=>({distance_km:71.8,duree_min:68,mode:p.mode,etapes:[{instruction:"Prendre l'autoroute A1 vers Diamniadio",distance_km:32.1},{instruction:"Continuer sur la N2 vers Thiès",distance_km:37.4}],geometry:{type:"LineString",coordinates:"[…]"}})}
+  ]},
+ {id:"equipements-sante",name:"Équipements de santé",mod:"Module C-Health",fam:3,ico:"health",st:"spec",
+  desc:"Structures sanitaires, plateaux techniques et accessibilité de la population aux soins.",
+  stack:["PostGIS","pg_featureserv","Valhalla"],
+  eps:[{m:"GET",p:"/v1/health/facilities/nearby",t:"Structures les plus proches",d:"Classées par temps d'accès réel, pas à vol d'oiseau.",
+    q:[["lat","décimal","Latitude",true,"14.7910"],["lon","décimal","Longitude",true,"-16.9256"],["type","texte","hopital, centre, poste","","centre"],["limit","entier","","","3"]],
+    r:p=>({results:[{nom:"Centre de santé (exemple A)",type:p.type,acces_min:6},{nom:"Centre de santé (exemple B)",type:p.type,acces_min:11}],note:"Données fictives de démonstration"})}]},
+ {id:"cartographie-scolaire",name:"Cartographie scolaire",mod:"Module CartoScol",fam:3,ico:"school",st:"spec",
+  desc:"Établissements, effectifs et aires de recrutement pour la planification scolaire.",
+  stack:["PostGIS","pygeoapi"],
+  eps:[{m:"GET",p:"/v1/schools",t:"Lister les établissements",d:"Filtrage par commune, cycle et statut.",
+    q:[["commune","code","Code commune",true,"01111"],["cycle","texte","elementaire, moyen, secondaire","","secondaire"]],
+    r:p=>({commune:p.commune,cycle:p.cycle,total:2,items:[{nom:"Lycée (exemple A)",effectif:1240,statut:"public"},{nom:"Lycée (exemple B)",effectif:860,statut:"privé"}],note:"Données fictives de démonstration"})}]},
+ {id:"patrimoine-bati",name:"Patrimoine bâti",mod:"Module PatriBâti",fam:4,ico:"build",st:"spec",
+  desc:"Inventaire et état du patrimoine bâti public : fiches bâtiments, occupation, diagnostics.",
+  stack:["PostGIS","FastAPI","Keycloak"],
+  eps:[{m:"GET",p:"/v1/buildings/{id}",t:"Fiche d'un bâtiment",d:"Accès restreint aux comptes habilités du gestionnaire.",
+    q:[["id","texte","Identifiant du bâtiment",true,"BAT-DK-000127"]],
+    r:p=>({id:p.id,usage:"bureaux administratifs",surface_m2:1840,etat:"moyen",dernier_diagnostic:"2025-11-04",note:"Données fictives de démonstration"})}]},
+ {id:"foncier-parcelles",name:"Foncier et parcelles",mod:"Module CegitCAD+",fam:4,ico:"parcel",st:"spec",
+  desc:"Recherche de parcelles par point ou identifiant, avec contenance et références.",
+  stack:["PostGIS","pg_featureserv"],
+  eps:[{m:"GET",p:"/v1/parcels",t:"Parcelle d'un point",d:"Renvoie la parcelle et ses voisines immédiates.",
+    q:[["lat","décimal","Latitude",true,"14.7910"],["lon","décimal","Longitude",true,"-16.9256"]],
+    r:p=>({parcelle:{reference:"TH-000-0000",contenance_m2:300},voisines:3,note:"Données fictives de démonstration"})}]},
+ {id:"zonage-urbanisme",name:"Zonage d'urbanisme",mod:"Module CEGIT-URBA",fam:4,ico:"urba",st:"spec",
+  desc:"Zone du plan d'urbanisme applicable à un point et règles associées.",
+  stack:["PostGIS","pygeoapi"],
+  eps:[{m:"GET",p:"/v1/zoning",t:"Zone applicable",d:"Pour l'instruction des autorisations d'urbanisme.",
+    q:[["lat","décimal","Latitude",true,"14.7910"],["lon","décimal","Longitude",true,"-16.9256"]],
+    r:p=>({document:"Plan d'urbanisme (exemple)",zone:"UA",libelle:"Zone urbaine dense",note:"Données fictives de démonstration"})}]},
+ {id:"risque-inondation",name:"Risque inondation",mod:"Module WALLU",fam:5,ico:"flood",st:"beta",
+  desc:"Exposition d'un point ou d'un bâtiment aux zones inondables et historique des événements.",
+  stack:["PostGIS","TiTiler","GDAL"],
+  eps:[{m:"GET",p:"/v1/risks/flood",t:"Exposition d'un point",d:"Niveau d'aléa, hauteur d'eau modélisée et événements recensés.",
+    q:[["lat","décimal","Latitude",true,"14.7600"],["lon","décimal","Longitude",true,"-17.3900"]],
+    r:p=>({point:[+p.lon,+p.lat],alea:"fort",hauteur_eau_m:0.8,evenements_recenses:3,source:"Modèle de démonstration",note:"Données fictives de démonstration"})}]},
+ {id:"biodiversite",name:"Biodiversité",mod:"Module NaturaSen",fam:5,ico:"leaf",st:"spec",
+  desc:"Observations de faune et de flore, référentiel taxonomique et sensibilité des espèces.",
+  stack:["PostGIS","pygeoapi"],
+  eps:[{m:"GET",p:"/v1/taxa/occurrences",t:"Observations dans une emprise",d:"Les espèces sensibles sont floutées à la maille.",
+    q:[["bbox","4 décimaux","ouest,sud,est,nord",true,"-17.2,14.6,-16.8,14.9"],["taxon","texte","Nom scientifique","",""]],
+    r:p=>({bbox:p.bbox,total:2,items:[{taxon:"Adansonia digitata",observations:42},{taxon:"Balearica pavonina",observations:5,floute:true}],note:"Données fictives de démonstration"})}]},
+ {id:"fonds-de-plan",name:"Fonds de plan et tuiles",mod:"Cartographie",fam:6,ico:"tiles",st:"proto",
+  desc:"Tuiles vectorielles et styles aux couleurs CEGIT pour MapLibre, QGIS et QWC2.",
+  stack:["Martin","MapLibre","OpenMapTiles"],
+  eps:[{m:"GET",p:"/v1/tiles/{style}/style.json",t:"Style de carte",d:"Style MapLibre prêt à l'emploi.",
+    q:[["style","texte","cegit-clair, cegit-sombre",true,"cegit-clair"]],
+    r:p=>({version:8,name:p.style,sources:{cegit:{type:"vector",tiles:["https://api.cegitgroup.com/v1/tiles/{z}/{x}/{y}.pbf"]}},layers:"[…]"})}]}
+];
+const LAYERS=[
+ ["Passerelle d'API","Clés, quotas, journalisation",[["Apache APISIX","Apache-2.0"],["Kong OSS","Apache-2.0"]]],
+ ["Identité","Comptes, OAuth2, rôles",[["Keycloak","Apache-2.0"]]],
+ ["Services","Logique métier et OpenAPI",[["FastAPI","MIT"],["pygeoapi","MIT"],["pg_featureserv","Apache-2.0"]]],
+ ["Moteurs spécialisés","Géocodage, routage, tuiles, rasters",[["Pelias","MIT"],["Valhalla","MIT"],["Martin","Apache-2.0"],["TiTiler","MIT"]]],
+ ["Données","Stockage et traitements",[["PostgreSQL / PostGIS","PostgreSQL / GPL-2"],["GDAL","MIT"]]],
+ ["Portail et documentation","Cette interface, spécifications",[["OpenAPI 3.1","Apache-2.0"],["Redoc","MIT"]]],
+ ["Exploitation","Déploiement, supervision",[["Docker Compose","Apache-2.0"],["Prometheus","Apache-2.0"],["Grafana","AGPL-3.0"]]]
+];
+
+const BASE="https://api.cegitgroup.com";
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+let state={fam:-1,st:"all",q:""};
+
+function toast(t){const el=$("#toast");el.textContent=t;el.hidden=false;clearTimeout(toast.t);toast.t=setTimeout(()=>el.hidden=true,2600)}
+function hlJSON(o){
+  return esc(JSON.stringify(o,null,2))
+   .replace(/(&quot;[^&]*?&quot;)(\s*:)/g,'<span class="k">$1</span>$2')
+   .replace(/:\s(&quot;.*?&quot;)/g,': <span class="s">$1</span>')
+   .replace(/([\[,\s])(-?\d+\.?\d*)(?=[,\s\]\n])/g,'$1<span class="n">$2</span>');
+}
+
+/* Accueil */
+$("#hero-code").innerHTML=`<span class="d">$</span> curl -G ${BASE}/v1/geocode \\
+  -H <span class="s">"X-API-Key: $CEGIT_KEY"</span> \\
+  --data-urlencode <span class="s">"q=Avenue Senghor, Thiès"</span>
+
+<span class="d"># 200 OK · 1 crédit</span>
+{
+  <span class="k">"label"</span>: <span class="s">"Avenue Léopold Sédar Senghor, Thiès"</span>,
+  <span class="k">"coordinates"</span>: [<span class="n">-16.9256</span>, <span class="n">14.7910</span>],
+  <span class="k">"commune"</span>: <span class="s">"Thiès-Nord"</span>,
+  <span class="k">"score"</span>: <span class="n">0.94</span>
+}`;
+$("#stats").innerHTML=`<div><b>${APIS.length}</b>API au catalogue</div><div><b>${APIS.reduce((a,x)=>a+x.eps.length,0)}</b>points d'accès</div><div><b>${new Set(APIS.flatMap(a=>a.stack)).size}</b>composants open source</div>`;
+
+function renderFams(){
+  const counts=FAMS.map((_,i)=>APIS.filter(a=>a.fam===i).length);
+  $("#fams").innerHTML=`<h3>Familles</h3><button class="fam" type="button" data-fam="-1" aria-pressed="${state.fam===-1}">Toutes les API <small>${APIS.length}</small></button>`+
+   FAMS.map((f,i)=>`<button class="fam" type="button" data-fam="${i}" aria-pressed="${state.fam===i}">${f} <small>${counts[i]}</small></button>`).join("");
+}
+function renderStatus(){
+  const opts=[["all","Tous les statuts"],...Object.entries(STATUS).map(([k,v])=>[k,v[0]])];
+  $("#status-filters").innerHTML=opts.map(([k,l])=>`<button class="chip" type="button" data-st="${k}" aria-pressed="${state.st===k}">${l}</button>`).join("");
+}
+function renderGrid(){
+  const q=state.q.toLowerCase();
+  const list=APIS.filter(a=>(state.fam<0||a.fam===state.fam)&&(state.st==="all"||a.st===state.st)&&
+    (!q||[a.name,a.desc,a.mod,...a.eps.map(e=>e.p+" "+e.t)].join(" ").toLowerCase().includes(q)));
+  $("#grid").innerHTML=list.length?list.map(a=>`<button class="card" type="button" data-api="${a.id}">
+    <div class="card-top"><span class="card-ico">${svg(I[a.ico])}</span><div><h3>${a.name}</h3><span class="mod">${a.mod}</span></div></div>
+    <p>${a.desc}</p>
+    <div class="card-foot"><code>${a.eps[0].p}${a.eps.length>1?` +${a.eps.length-1}`:""}</code><span class="pill ${STATUS[a.st][1]}">${STATUS[a.st][0]}</span></div>
+  </button>`).join(""):`<div class="empty">Aucune API ne correspond à « ${esc(state.q)} ». Essayez « adresse », « isochrone » ou « parcelle ».</div>`;
+}
+$("#layers").innerHTML=LAYERS.map(([n,s,t])=>`<div class="layer"><h4>${n}<small>${s}</small></h4><div class="tools">${t.map(([x,l])=>`<span class="tool"><b>${x}</b><span class="licence">${l}</span></span>`).join("")}</div></div>`).join("");
+
+document.addEventListener("click",e=>{
+  const b=e.target.closest("[data-fam],[data-st],[data-api],[data-go],[data-key],[data-contact],#btn-key,#btn-login,#home");
+  if(!b)return;
+  if(b.dataset.fam!==undefined){state.fam=+b.dataset.fam;renderFams();renderGrid()}
+  else if(b.dataset.st){state.st=b.dataset.st;renderStatus();renderGrid()}
+  else if(b.dataset.api){e.preventDefault();openApi(b.dataset.api)}
+  else if(b.dataset.go){e.preventDefault();goHome(b.dataset.go)}
+  else if(b.id==="home"){e.preventDefault();goHome("top")}
+  else if(b.id==="btn-login"){toast("Connexion : branchement prévu sur Keycloak.")}
+  else if(b.matches("#btn-key,[data-key]")){toast("Création de compte : formulaire relié à la passerelle d'API (à venir).")}
+  else if(b.dataset.contact!==undefined){toast("Écrivez à api@cegitgroup.com")}
+});
+$("#q").addEventListener("input",e=>{state.q=e.target.value.trim();renderGrid()});
+$("#search-form").addEventListener("submit",e=>{e.preventDefault();$("#catalogue").scrollIntoView({behavior:"smooth"})});
+
+function goHome(anchor){
+  $("#view-api").hidden=true;$("#view-home").hidden=false;
+  document.querySelectorAll(".nav [data-go]").forEach(n=>n.setAttribute("aria-current",n.dataset.go===anchor?"page":"false"));
+  if(anchor==="top")window.scrollTo(0,0);else document.getElementById(anchor)?.scrollIntoView();
+  try{history.replaceState(null,"",anchor==="top"?"#catalogue":"#"+anchor)}catch(_){}
+}
+
+/* Fiche API */
+let cur={api:null,ep:0,lang:"curl",tab:"ref"};
+function openApi(id,silent){
+  const a=APIS.find(x=>x.id===id); if(!a)return;
+  cur={api:a,ep:0,lang:"curl",tab:"ref"};
+  $("#view-home").hidden=true;$("#view-api").hidden=false;window.scrollTo(0,0);
+  document.querySelectorAll(".nav [data-go]").forEach(n=>n.setAttribute("aria-current",n.dataset.go==="catalogue"?"page":"false"));
+  if(!silent)try{history.replaceState(null,"","#"+id)}catch(_){}
+  renderApi();
+}
+function params(){const o={};cur.api.eps[cur.ep].q.forEach(([k,,,,v],i)=>{const el=document.getElementById("p-"+i);o[k]=el?el.value:v});return o}
+function buildUrl(ep,p){
+  let path=ep.p.replace(/\{(\w+)\}/g,(_,k)=>encodeURIComponent(p[k]||k));
+  const qs=ep.q.filter(([k])=>!ep.p.includes("{"+k+"}")&&p[k]!=="").map(([k])=>`${k}=${encodeURIComponent(p[k])}`).join("&");
+  return {path,qs,full:BASE+path+(ep.m==="GET"&&qs?"?"+qs:"")};
+}
+function sample(ep,p,lang){
+  const u=buildUrl(ep,p);
+  const body=Object.fromEntries(ep.q.filter(([k])=>!ep.p.includes("{"+k+"}")&&p[k]!=="").map(([k])=>[k,p[k]]));
+  const bodyStr=JSON.stringify(body);
+  if(lang==="curl") return ep.m==="GET"
+    ? `curl "${u.full}" \\\n  -H "X-API-Key: $CEGIT_KEY"`
+    : `curl -X POST "${BASE}${u.path}" \\\n  -H "X-API-Key: $CEGIT_KEY" \\\n  -H "Content-Type: application/json" \\\n  -d '${bodyStr}'`;
+  if(lang==="python") return `import os, requests\n\nr = requests.${ep.m.toLowerCase()}(\n    "${BASE}${u.path}",\n    headers={"X-API-Key": os.environ["CEGIT_KEY"]},\n    ${ep.m==="GET"?"params":"json"}=${JSON.stringify(body,null,0).replace(/":/g,'": ').replace(/,"/g,', "')},\n    timeout=10,\n)\nr.raise_for_status()\nprint(r.json())`;
+  if(lang==="js") return `const res = await fetch(\n  "${ep.m==="GET"?u.full:BASE+u.path}",\n  {\n    method: "${ep.m}",\n    headers: { "X-API-Key": CEGIT_KEY${ep.m==="POST"?', "Content-Type": "application/json"':""} },${ep.m==="POST"?`\n    body: JSON.stringify(${bodyStr}),`:""}\n  }\n);\nconst data = await res.json();`;
+  if(lang==="pyqgis") return `# Console Python de QGIS\nfrom qgis.core import QgsNetworkAccessManager\nfrom qgis.PyQt.QtNetwork import QNetworkRequest\nfrom qgis.PyQt.QtCore import QUrl\nimport json\n\nreq = QNetworkRequest(QUrl("${u.full}"))\nreq.setRawHeader(b"X-API-Key", CEGIT_KEY.encode())\nrep = QgsNetworkAccessManager.instance().blockingGet(req)\nprint(json.loads(bytes(rep.content())))`;
+}
+function renderApi(){
+  const a=cur.api, ep=a.eps[cur.ep];
+  $("#api-root").innerHTML=`
+  <div class="crumb"><button type="button" data-go="catalogue">Catalogue</button><span>/</span><span>${FAMS[a.fam]}</span><span>/</span><span>${a.name}</span></div>
+  <div class="api-head">
+    <span class="card-ico">${svg(I[a.ico],28)}</span>
+    <div style="flex:1;min-width:0"><h1>${a.name}</h1><p>${a.desc}</p>
+      <div class="meta"><span class="pill ${STATUS[a.st][1]}">${STATUS[a.st][0]}</span><span class="mod">${a.mod}</span>${a.stack.map(s=>`<span class="tool">${s}</span>`).join("")}</div></div>
+    <button class="btn btn-primary" type="button" data-key>Obtenir une clé</button>
+  </div>
+  <div class="tabs" role="tablist">
+    ${[["ref","Référence et essai"],["guide","Présentation"],["spec","Spécification OpenAPI"]].map(([k,l])=>`<button role="tab" type="button" data-tab="${k}" aria-selected="${cur.tab===k}">${l}</button>`).join("")}
+  </div>
+  <div id="tab-body"></div>`;
+  document.querySelectorAll("[data-tab]").forEach(t=>t.onclick=()=>{cur.tab=t.dataset.tab;renderApi()});
+  const tb=$("#tab-body");
+  if(cur.tab==="guide"){
+    tb.innerHTML=`<div class="doc"><h3>À quoi sert cette API</h3><p>${a.desc}</p>
+      <h3>Points d'accès</h3><ul>${a.eps.map(e=>`<li><code>${e.m} ${e.p}</code> : ${e.t}</li>`).join("")}</ul>
+      <h3>Composants open source</h3><p>${a.stack.join(", ")}.</p>
+      <h3>Description fonctionnelle</h3><p>Section à compléter à partir de la description du fonctionnement attendu : publics visés, sources de données, fréquence de mise à jour, règles d'accès.</p></div>`;
+    return;
+  }
+  if(cur.tab==="spec"){
+    const spec={openapi:"3.1.0",info:{title:a.name,version:"1.0.0"},servers:[{url:BASE}],
+      components:{securitySchemes:{apiKey:{type:"apiKey",in:"header",name:"X-API-Key"}}},security:[{apiKey:[]}],
+      paths:Object.fromEntries(a.eps.map(e=>[e.p,{[e.m.toLowerCase()]:{summary:e.t,description:e.d,
+        parameters:e.q.map(([k,t,d,r])=>({name:k,in:e.p.includes("{"+k+"}")?"path":"query",required:!!r||e.p.includes("{"+k+"}"),description:d,schema:{type:/entier/.test(t)?"integer":/décimal/.test(t)?"number":"string"}})),
+        responses:{"200":{description:"Succès"},"400":{description:"Paramètre invalide"},"401":{description:"Clé invalide"},"429":{description:"Quota dépassé"}}}}]))};
+    tb.innerHTML=`<div class="code" style="border-radius:8px"><button class="copy" type="button" id="copy-spec">Copier</button><pre>${hlJSON(spec)}</pre></div>`;
+    $("#copy-spec").onclick=()=>copy(JSON.stringify(spec,null,2));
+    return;
+  }
+  tb.innerHTML=`<div class="api-body">
+    <nav class="eps" aria-label="Points d'accès">${a.eps.map((e,i)=>`<button class="ep" type="button" data-ep="${i}" aria-pressed="${i===cur.ep}"><span class="m m-${e.m}">${e.m}</span><code>${e.p}</code></button>`).join("")}</nav>
+    <div class="panel">
+      <div class="box">
+        <h3>${ep.t}</h3><p style="margin:0 0 12px;color:var(--muted)">${ep.d}</p>
+        <div class="url"><span class="m m-${ep.m}">${ep.m}</span><span>${ep.p}</span></div>
+        <div class="tbl-wrap"><table><thead><tr><th>Paramètre</th><th>Type</th><th>Description</th></tr></thead><tbody>
+          ${ep.q.map(([k,t,d,r])=>`<tr><td><code>${k}</code>${r?'<span class="req">requis</span>':""}</td><td>${t}</td><td>${d||"—"}</td></tr>`).join("")}
+        </tbody></table></div>
+      </div>
+      <div class="box">
+        <h3>Essayer</h3>
+        <form id="tryform">
+          ${ep.q.map(([k,t,,,v],i)=>`<div class="field"><label for="p-${i}">${k}</label><input id="p-${i}" value="${esc(v)}" autocomplete="off"></div>`).join("")}
+          <button class="btn btn-primary" type="submit">${svg("M5 12h14M13 6l6 6-6 6",16)} Envoyer la requête</button>
+        </form>
+        <div class="code-tabs" role="tablist">${[["curl","cURL"],["python","Python"],["js","JavaScript"],["pyqgis","PyQGIS"]].map(([k,l])=>`<button type="button" role="tab" data-lang="${k}" aria-selected="${cur.lang===k}">${l}</button>`).join("")}</div>
+        <div class="code"><button class="copy" type="button" id="copy-code">Copier</button><pre id="code-out"></pre></div>
+        <div class="resp-head"><span>Réponse <span class="status" id="resp-status"></span></span><span class="sim">Réponse simulée, données de démonstration</span></div>
+        <div class="code" style="border-radius:8px"><pre id="resp-out"></pre></div>
+      </div>
+    </div></div>`;
+  document.querySelectorAll("[data-ep]").forEach(b=>b.onclick=()=>{cur.ep=+b.dataset.ep;renderApi()});
+  document.querySelectorAll("[data-lang]").forEach(b=>b.onclick=()=>{cur.lang=b.dataset.lang;document.querySelectorAll("[data-lang]").forEach(x=>x.setAttribute("aria-selected",x===b));updCode()});
+  $("#tryform").addEventListener("input",updCode);
+  $("#tryform").addEventListener("submit",e=>{e.preventDefault();run()});
+  $("#copy-code").onclick=()=>copy(sample(ep,params(),cur.lang));
+  updCode();run();
+}
+function updCode(){const ep=cur.api.eps[cur.ep];$("#code-out").textContent=sample(ep,params(),cur.lang)}
+function run(){
+  const ep=cur.api.eps[cur.ep],p=params();
+  const miss=ep.q.filter(([k,,,r])=>r&&!p[k]).map(([k])=>k);
+  if(miss.length){$("#resp-status").textContent="400 Bad Request";$("#resp-status").style.color="var(--warn)";
+    $("#resp-out").innerHTML=hlJSON({error:"parametre_manquant",message:`Renseignez : ${miss.join(", ")}`});return}
+  $("#resp-status").textContent=`200 OK · ${ep.p.includes("isochrone")||ep.p.includes("route")?5:1} crédit(s)`;$("#resp-status").style.color="";
+  $("#resp-out").innerHTML=hlJSON(ep.r(p));
+}
+function copy(t){
+  try{navigator.clipboard.writeText(t).then(()=>toast("Copié dans le presse-papiers."),()=>toast("Copie refusée : sélectionnez le texte manuellement."))}
+  catch(_){toast("Copie refusée : sélectionnez le texte manuellement.")}
+}
+
+renderFams();renderStatus();renderGrid();
+const h=location.hash.slice(1);
+if(APIS.some(a=>a.id===h))openApi(h,true);else if(h&&document.getElementById(h))document.getElementById(h).scrollIntoView();
+</script>
+</body>
+</html>

@@ -1,0 +1,90 @@
+# Généré depuis le catalogue du portail. À compléter au fil des spécifications.
+openapi: 3.1.0
+info:
+  title: CEGIT – Patrimoine bâti
+  version: 0.1.0
+  description: 'Inventaire et état du patrimoine bâti public : fiches bâtiments, occupation, diagnostics.
+
+
+    Statut : En spécification. Exemples de réponses fictifs.'
+  contact:
+    name: CEGIT
+    url: https://cegitgroup.com/fr
+    email: api@cegitgroup.com
+servers:
+- url: https://api.cegitgroup.com
+  description: Production (cible)
+- url: https://api-preprod.cegitgroup.com
+  description: Préproduction
+security:
+- apiKey: []
+tags:
+- name: Patrimoine bâti
+  description: Module PatriBâti
+paths:
+  /v1/buildings/{id}:
+    get:
+      summary: Fiche d'un bâtiment
+      description: Accès restreint aux comptes habilités du gestionnaire.
+      operationId: v1_buildings_id_get
+      tags:
+      - Patrimoine bâti
+      responses:
+        '200':
+          description: Succès
+          content:
+            application/json:
+              example:
+                id: BAT-DK-000127
+                usage: bureaux administratifs
+                surface_m2: 1840
+                etat: moyen
+                dernier_diagnostic: '2025-11-04'
+                note: Données fictives de démonstration
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+      parameters:
+      - name: id
+        in: path
+        required: true
+        description: Identifiant du bâtiment (texte)
+        schema:
+          type: string
+        example: BAT-DK-000127
+components:
+  securitySchemes:
+    apiKey:
+      type: apiKey
+      in: header
+      name: X-API-Key
+  schemas:
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+  responses:
+    BadRequest:
+      description: Paramètre manquant ou invalide
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Unauthorized:
+      description: Clé absente ou invalide
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    TooManyRequests:
+      description: Quota dépassé (voir l'en-tête Retry-After)
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
