@@ -40,7 +40,11 @@
     send: "M5 12h14M13 6l6 6-6 6",
     back: "M19 12H5M11 18l-6-6 6-6",
     plus: "M12 5v14M5 12h14",
-    draw: "M3 17L17 3l4 4L7 21H3zM14 6l4 4"
+    draw: "M3 17L17 3l4 4L7 21H3zM14 6l4 4",
+    reset: "M4 4v6h6M20 20v-6h-6M5.5 15a7 7 0 0 0 12.4 1.6M18.5 9A7 7 0 0 0 6.1 7.4",
+    chart: "M4 20V10M10 20V4M16 20v-7M22 20H2",
+    key: "M14 10a4 4 0 1 0-1.2 2.8L21 21M17 17l2-2M19 19l2-2",
+    settings: "M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM19.4 15a1.6 1.6 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-1.8-.3 1.6 1.6 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.6 1.6 0 0 0-1-1.5 1.6 1.6 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.6 1.6 0 0 0 .3-1.8 1.6 1.6 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.6 1.6 0 0 0 1.5-1 1.6 1.6 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.6 1.6 0 0 0 1.8.3H9a1.6 1.6 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.6 1.6 0 0 0 1 1.5 1.6 1.6 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.6 1.6 0 0 0-.3 1.8V9a1.6 1.6 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.6 1.6 0 0 0-1.5 1z"
   };
 
   function svg(name, size, cls) {
@@ -51,37 +55,64 @@
   /* Session de démonstration.
      ATTENTION : sur un site statique, ce contrôle se fait dans le navigateur et ne protège rien.
      Il simule le parcours utilisateur ; la vraie authentification passera par Keycloak. */
-  const DEMO_HASHES = ["8da193366e1554c08b2870c50f737b9587c3372b656151c4a96028af26f51334"];
+  const ACCOUNTS = {
+    "8da193366e1554c08b2870c50f737b9587c3372b656151c4a96028af26f51334": { role: "admin", prenom: "Administrateur", nom: "CEGIT", entreprise: "CEGIT", email: "admin@cegitgroup.com", plan: "Institution", credits: 100000 },
+    "6fbb5505b4e31dd25f86218c40e414d668ec947ba987db98414e0845c35d7ff2": { role: "user", prenom: "Utilisateur", nom: "Démo", entreprise: "Entreprise de démonstration", email: "client@exemple.sn", plan: "Essai", credits: 2500 }
+  };
   const SKEY = "cegit.session";
+  const store = {
+    get(k, d) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch (_) { return (store.mem && k in store.mem) ? store.mem[k] : d; } },
+    set(k, v) { store.mem = store.mem || {}; store.mem[k] = v; try { localStorage.setItem(k, JSON.stringify(v)); } catch (_) {} },
+    del(k) { if (store.mem) delete store.mem[k]; try { localStorage.removeItem(k); } catch (_) {} }
+  };
 
   async function sha256(text) {
     const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text));
     return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, "0")).join("");
   }
+  function randKey(n) {
+    const abc = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789";
+    const a = new Uint32Array(n); (window.crypto || {}).getRandomValues ? crypto.getRandomValues(a) : a.forEach((_, i) => { a[i] = Math.random() * 1e9; });
+    return Array.from(a, x => abc[x % abc.length]).join("");
+  }
 
   const AUTH = {
-    get() {
-      try { return JSON.parse(localStorage.getItem(SKEY)) || null; } catch (_) { return AUTH._mem || null; }
-    },
-    save(s) {
-      AUTH._mem = s;
-      try { localStorage.setItem(SKEY, JSON.stringify(s)); } catch (_) {}
-    },
+    get() { return store.get(SKEY, null); },
+    save(s) { store.set(SKEY, s); },
+    isAdmin() { const s = AUTH.get(); return !!s && s.role === "admin"; },
     async login(user, pass) {
-      const h = await sha256(String(user).trim().toLowerCase() + ":" + pass);
-      if (!DEMO_HASHES.includes(h)) return false;
-      const key = "cegit_demo_" + h.slice(0, 16);
-      AUTH.save({ user: String(user).trim(), plan: "Essai", credits: 2500, apiKey: key, since: new Date().toISOString() });
+      const u = String(user).trim().toLowerCase();
+      const h = await sha256(u + ":" + pass);
+      const acc = ACCOUNTS[h];
+      if (!acc) return false;
+      const prev = store.get("cegit.profile." + u, null);
+      const since = new Date(), exp = new Date(since.getTime() + 30 * 864e5);
+      AUTH.save(Object.assign({ user: u, creditsTotal: acc.credits, apiKey: randKey(32), secret: randKey(18), keyCreated: since.toISOString(), since: since.toISOString(), expires: exp.toISOString() }, acc, prev || {}, { user: u, role: acc.role }));
+      AUTH.update({});
       return true;
     },
-    logout() {
-      AUTH._mem = null;
-      try { localStorage.removeItem(SKEY); } catch (_) {}
+    update(patch) {
+      const s = AUTH.get(); if (!s) return null;
+      Object.assign(s, patch); AUTH.save(s);
+      const keep = ["prenom", "nom", "entreprise", "email", "telephone", "pays", "ninea", "adresse", "paiement", "plan", "credits", "creditsTotal", "apiKey", "secret", "keyCreated", "since", "expires", "cancelled"];
+      store.set("cegit.profile." + s.user, Object.fromEntries(keep.filter(k => k in s).map(k => [k, s[k]])));
+      return s;
     },
+    logout() { store.del(SKEY); },
     spend(n) {
       const s = AUTH.get(); if (!s) return 0;
-      s.credits = Math.max(0, (s.credits || 0) - (n || 1)); AUTH.save(s); return s.credits;
-    }
+      return AUTH.update({ credits: Math.max(0, (s.credits || 0) - (n || 1)) }).credits;
+    },
+    /* Journal de consommation : un enregistrement par appel (console ou démo). */
+    record(api, credits, error) {
+      const s = AUTH.get(); if (!s) return;
+      const k = "cegit.usage." + s.user, log = store.get(k, []);
+      log.push({ t: Date.now(), api, c: credits || 0, e: error ? 1 : 0 });
+      store.set(k, log.slice(-3000));
+      if (credits) AUTH.spend(credits);
+    },
+    usage() { const s = AUTH.get(); return s ? store.get("cegit.usage." + s.user, []) : []; },
+    regenerate() { return AUTH.update({ apiKey: randKey(32), secret: randKey(18), keyCreated: new Date().toISOString() }); }
   };
 
   function esc(s) {
@@ -103,5 +134,5 @@
 
   const docUrl = id => `${REPO}/blob/main/docs/apis/${id}.md`;
 
-  window.CEGIT_UI = { REPO, ICONS, svg, AUTH, esc, toast, copy, docUrl };
+  window.CEGIT_UI = { REPO, ICONS, svg, AUTH, esc, toast, copy, docUrl, store };
 })();

@@ -110,6 +110,12 @@
   <div class="wrap section" id="api-root"></div>
 </main>
 
+<!-- ESPACE COMPTE -->
+<main id="view-tableau-de-bord" class="view acct" hidden><div class="wrap section" id="dash-root"></div></main>
+<main id="view-mon-compte" class="view acct" hidden><div class="wrap section" id="acct-root"></div></main>
+<main id="view-cles-api" class="view acct" hidden><div class="wrap section" id="keys-root"></div></main>
+<main id="view-administration" class="view acct" hidden><div class="wrap section" id="admin-root"></div></main>
+
 <!-- DOCUMENTATION -->
 <main id="view-documentation" class="view" hidden>
   <section class="wrap section doc">
@@ -156,7 +162,7 @@
 <dialog class="modal" id="login">
   <div class="modal-head"><span class="brand-mark" id="login-mark"></span><h2>Se connecter</h2><button class="icon-btn" type="button" id="login-close" aria-label="Fermer"></button></div>
   <form id="login-form" novalidate>
-    <div class="field"><label for="login-user">Identifiant</label><input id="login-user" name="user" autocomplete="username" required></div>
+    <div class="field"><label for="login-user">Identifiant</label><input id="login-user" name="user" autocomplete="username" required autofocus></div>
     <div class="field"><label for="login-pass">Mot de passe</label><input id="login-pass" name="pass" type="password" autocomplete="current-password" required></div>
     <p class="form-err" id="login-err" aria-live="polite"></p>
     <button class="btn btn-primary" type="submit">Se connecter</button>
@@ -168,6 +174,7 @@
 
 <script src="assets/catalog.js"></script>
 <script src="assets/common.js"></script>
+<script src="assets/account.js"></script>
 <script src="assets/portal.js"></script>
 </body>
 </html>

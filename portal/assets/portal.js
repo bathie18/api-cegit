@@ -26,17 +26,26 @@
       el.innerHTML = `<button class="btn btn-ghost" type="button" data-login>Se connecter</button><a class="btn btn-primary" href="#offres" data-go="offres">Essai gratuit</a>`;
       return;
     }
-    el.innerHTML = `<button class="user-btn" type="button" id="user-btn" aria-expanded="false" aria-controls="user-menu"><span class="avatar">${esc(s.user[0].toUpperCase())}</span>${esc(s.user)}${svg("chevron", 16)}</button>
+    const full = `${s.prenom || s.user} ${s.nom || ""}`.trim();
+    const item = (h, t, sub, ico) => `<a class="um-item" href="#${h}" data-page="${h}">${svg(ico, 18)}<span><b>${t}</b><small>${sub}</small></span></a>`;
+    el.innerHTML = `<button class="user-btn" type="button" id="user-btn" aria-expanded="false" aria-controls="user-menu" aria-label="Mon espace"><span class="avatar">${esc((s.prenom || s.user)[0].toUpperCase())}</span><span class="ub-name">${esc(s.prenom || s.user)}</span>${svg("chevron", 16)}</button>
       <div class="user-menu" id="user-menu" hidden>
-        <dl><dt>Offre</dt><dd>${esc(s.plan)}</dd><dt>Crédits restants</dt><dd>${(s.credits || 0).toLocaleString("fr-FR")}</dd></dl>
-        <div><div class="form-note" style="margin-bottom:4px">Clé d'API de démonstration</div><div class="key"><span>${esc(s.apiKey)}</span><button class="btn btn-ghost btn-sm" type="button" id="copy-key">Copier</button></div></div>
-        <button class="btn btn-ghost" type="button" id="logout">Se déconnecter</button>
+        <div class="um-head"><div><b>${esc(full)}</b><span>${esc(s.email || "")}</span></div><button class="icon-btn" type="button" id="um-close" aria-label="Fermer">${svg("close", 16)}</button></div>
+        <div class="um-credits"><span>${esc(s.plan)}</span><b>${(s.credits || 0).toLocaleString("fr-FR")} crédits</b></div>
+        ${item("tableau-de-bord", "Mon tableau de bord", "Utilisation, consommation de crédits", "chart")}
+        ${item("mon-compte", "Mon compte", "Abonnement, profil, facturation", "user")}
+        ${item("cles-api", "Clés API", "Clé, secret", "key")}
+        ${s.role === "admin" ? item("administration", "Administration", "Utilisateurs, catalogue, journal", "settings") : ""}
+        <button class="um-item um-out" type="button" id="logout">${svg("back", 18)}<span><b>Se déconnecter</b></span></button>
       </div>`;
     const btn = $("#user-btn"), menu = $("#user-menu");
+    const closeM = () => { menu.hidden = true; btn.setAttribute("aria-expanded", "false"); };
     btn.onclick = e => { e.stopPropagation(); menu.hidden = !menu.hidden; btn.setAttribute("aria-expanded", String(!menu.hidden)); };
-    $("#copy-key").onclick = () => copy(s.apiKey, "Clé copiée.");
-    $("#logout").onclick = () => { AUTH.logout(); renderSession(); toast("Vous êtes déconnecté."); route(); };
+    $("#um-close").onclick = closeM;
+    menu.querySelectorAll("[data-page]").forEach(a => a.onclick = e => { e.preventDefault(); closeM(); setHash(a.dataset.page); route(); window.scrollTo(0, 0); });
+    $("#logout").onclick = () => { AUTH.logout(); renderSession(); toast("Vous êtes déconnecté."); if (ACC.includes(curHash())) { setHash("catalogue"); } route(); };
   }
+  window.addEventListener("cegit:session", () => renderSession());
   document.addEventListener("click", e => {
     const m = $("#user-menu");
     if (m && !m.hidden && !e.target.closest(".session")) { m.hidden = true; $("#user-btn")?.setAttribute("aria-expanded", "false"); }
@@ -46,7 +55,7 @@
   function openLogin() {
     $("#login-err").textContent = "";
     if (typeof dlg.showModal === "function") dlg.showModal(); else dlg.setAttribute("open", "");
-    setTimeout(() => $("#login-user").focus(), 30);
+    $("#login-user").focus();
   }
   function closeLogin() { if (dlg.open) dlg.close ? dlg.close() : dlg.removeAttribute("open"); }
   $("#login-close").onclick = closeLogin;
@@ -58,12 +67,14 @@
     try { ok = await AUTH.login(u, p); } catch (_) { $("#login-err").textContent = "La connexion nécessite une page en HTTPS."; return; }
     if (!ok) { $("#login-err").textContent = "Identifiant ou mot de passe incorrect."; return; }
     $("#login-pass").value = "";
-    closeLogin(); renderSession(); toast(`Connecté en tant que ${u}.`);
+    closeLogin(); renderSession(); toast(`Bienvenue, ${AUTH.get().prenom || u}.`); renderGrid();
     if (pending) { const p2 = pending; pending = null; go(p2.type, p2.id); } else route();
   });
 
   /* ---------- Navigation ---------- */
-  const VIEWS = ["catalogue", "offres", "api", "documentation"];
+  const ACC = window.CEGIT_ACCOUNT.views;
+  const VIEWS = ["catalogue", "offres", "api", "documentation"].concat(ACC);
+  const curHash = () => decodeURIComponent(location.hash.slice(1)) || "catalogue";
   function show(view) {
     VIEWS.forEach(v => { $("#view-" + v).hidden = v !== view; });
     document.querySelectorAll(".nav a").forEach(a => a.setAttribute("aria-current", a.dataset.go === (view === "api" ? "catalogue" : view) ? "page" : "false"));
@@ -82,7 +93,8 @@
   /* Ouvrir une API : essai (fiche) ou démo. Non connecté → page Offres. */
   function go(type, id) {
     const api = APIS.find(a => a.id === id);
-    if (!api) return;
+    if (!api && type !== "page") return;
+    if (type === "page") { setHash(id); route(); return; }
     if (!AUTH.get()) { showGate(type, api); setHash("offres"); return; }
     if (type === "demo") { location.href = demoUrl(id); return; }
     show("api"); setHash("api-" + id); window.scrollTo(0, 0); renderApi(api);
@@ -97,10 +109,16 @@
       if (api) { show("api"); renderApi(api); return; }
     }
     if (h === "contact") { show("catalogue"); setTimeout(() => $("#contact").scrollIntoView(), 0); return; }
+    if (ACC.includes(h)) {
+      if (!AUTH.get()) { pending = { type: "page", id: h }; show("catalogue"); openLogin(); return; }
+      if (h === "administration" && !AUTH.isAdmin()) { toast("L'administration est réservée aux administrateurs."); setHash("tableau-de-bord"); route(); return; }
+      show(h); window.CEGIT_ACCOUNT.render(h); return;
+    }
     if (h !== "offres") $("#gate").hidden = true;
     show(VIEWS.includes(h) ? h : "catalogue");
   }
   window.addEventListener("hashchange", route);
+  window.addEventListener("cegit:catalog", () => { renderFams(); renderGrid(); });
 
   document.addEventListener("click", e => {
     const t = e.target.closest("[data-go],[data-login],[data-try],[data-demo],[data-link],[data-signup]");
@@ -128,15 +146,15 @@
 
   /* ---------- Catalogue ---------- */
   function renderFams() {
-    const counts = FAMS.map((_, i) => APIS.filter(a => a.fam === i).length);
-    $("#fams").innerHTML = `<button class="chip" type="button" data-fam="-1" aria-pressed="${state.fam === -1}">Toutes <small>${APIS.length}</small></button>` +
+    const counts = FAMS.map((_, i) => APIS.filter(a => a.fam === i && !a.hidden).length);
+    $("#fams").innerHTML = `<button class="chip" type="button" data-fam="-1" aria-pressed="${state.fam === -1}">Toutes <small>${APIS.filter(a => !a.hidden).length}</small></button>` +
       FAMS.map((f, i) => counts[i] ? `<button class="chip" type="button" data-fam="${i}" aria-pressed="${state.fam === i}">${f} <small>${counts[i]}</small></button>` : "").join("");
     document.querySelectorAll("[data-fam]").forEach(b => b.onclick = () => { state.fam = +b.dataset.fam; renderFams(); renderGrid(); });
   }
   const norm = s => s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
   function renderGrid() {
     const q = norm(state.q);
-    const list = APIS.filter(a => (state.fam < 0 || a.fam === state.fam) &&
+    const list = APIS.filter(a => !a.hidden && (state.fam < 0 || a.fam === state.fam) &&
       (!q || norm([a.name, a.desc, a.mod, FAMS[a.fam], ...a.eps.map(e => e.p + " " + e.t)].join(" ")).includes(q)));
     $("#count").textContent = `${list.length} API${list.length > 1 ? "" : ""} ${state.fam >= 0 ? "· " + FAMS[state.fam] : ""}`;
     $("#grid").innerHTML = list.length ? list.map(a => `
@@ -243,10 +261,11 @@
     const ep = cur.api.eps[cur.ep], p = params(), st = $("#resp-status");
     const miss = ep.q.filter(([k, , , r]) => r && !p[k]).map(([k]) => k);
     if (miss.length) {
-      st.textContent = "400 Bad Request"; st.classList.add("err");
+      st.textContent = "400 Bad Request"; st.classList.add("err"); AUTH.record(cur.api.id, 0, true);
       $("#resp-out").innerHTML = hlJSON({ error: "parametre_manquant", message: `Renseignez : ${miss.join(", ")}` }); return;
     }
-    const left = AUTH.spend(costOf(ep));
+    AUTH.record(cur.api.id, costOf(ep), false);
+    const left = AUTH.get().credits;
     st.classList.remove("err"); st.textContent = `200 OK · ${costOf(ep)} crédit${costOf(ep) > 1 ? "s" : ""} · ${left.toLocaleString("fr-FR")} restants`;
     let body; try { body = ep.r(p); } catch (_) { body = { erreur: "exemple indisponible" }; }
     $("#resp-out").innerHTML = hlJSON(body);

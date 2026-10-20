@@ -52,6 +52,9 @@ Des services REST documentés pour localiser, enrichir et analyser les données 
 | « Démo » | Page Offres | Démonstration cartographique sur fond OpenStreetMap |
 | Menu ⋮ d'une fiche | Documentation de l'API (`docs/apis/<id>.md`) | Idem |
 | Icône lien | Copie le lien direct vers l'API | Idem |
+| Menu du compte | — | Tableau de bord, Mon compte, Clés API ; Administration pour le rôle admin |
+
+Deux comptes de test existent : un **administrateur** (module d'administration) et un **utilisateur standard**. Leurs identifiants sont communiqués par le CEGIT. La consommation, le profil et les réglages d'administration sont conservés dans le navigateur (démonstration).
 
 ## Organisation du dépôt
 
@@ -65,6 +68,7 @@ api-cegit/
 │       ├── geo.js            Accès aux services OSM et repli de démonstration
 │       ├── demo.js           Démonstrations, API par API
 │       ├── portal.js         Catalogue, connexion, console d'essai
+│       ├── account.js        Espace compte et administration
 │       ├── common.js         Pictogrammes, session, utilitaires
 │       └── *.css             Charte CEGIT
 ├── docs/

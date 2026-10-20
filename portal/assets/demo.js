@@ -34,8 +34,31 @@
   const pin = (lat, lon, title) => L.marker([lat, lon], { icon: pinIcon(), title: title || "" }).addTo(res);
   const fit = (bounds, maxZoom) => { try { map.fitBounds(bounds, { padding: [40, 40], maxZoom: maxZoom || 16 }); } catch (_) {} };
 
+  /* ---------- Réinitialisation ---------- */
+  const ResetCtl = L.Control.extend({
+    options: { position: "topleft" },
+    onAdd() {
+      const b = L.DomUtil.create("button", "reset-ctl");
+      b.type = "button"; b.title = "Réinitialiser la démo"; b.setAttribute("aria-label", "Réinitialiser la démo");
+      b.innerHTML = `${svg("reset", 16)}<span>Réinitialiser</span>`;
+      L.DomEvent.disableClickPropagation(b);
+      L.DomEvent.on(b, "click", e => { L.DomEvent.stop(e); resetDemo(); });
+      return b;
+    }
+  });
+  new ResetCtl().addTo(map);
+  function resetDemo() {
+    if (!S.api) return;
+    stopDraw(); S.place = null; PTS.a = PTS.b = null; S.mx = null; S.mode = "auto";
+    if (baseKey !== "osm") setBase("osm");
+    closeSw(); renderTabs(); renderTab();
+    map.setView([14.5, -14.45], 7);
+    toast("Démo réinitialisée.");
+  }
+
   /* ---------- État et utilitaires d'affichage ---------- */
   const S = { api: null, tab: 0, place: null, run: 0, mode: "auto", draw: null };
+  const use = (n, err) => AUTH.record(S.api ? S.api.id : "?", n == null ? 1 : n, err);
   const busyEl = $("#busy");
   let busyN = 0;
   const busy = on => { busyN = Math.max(0, busyN + (on ? 1 : -1)); busyEl.hidden = busyN === 0; };
@@ -184,8 +207,8 @@
     $("#out").innerHTML = `<p class="r-sub">Calcul en cours…</p>`;
     busy(true);
     let html;
-    try { html = await t.run(p, () => my === S.run); }
-    catch (err) { html = `<p class="note">Le calcul a échoué : ${esc(err.message || err)}. Réessayez dans un instant.</p>`; }
+    try { html = await t.run(p, () => my === S.run); use(1); }
+    catch (err) { use(1, true); html = `<p class="note">Le calcul a échoué : ${esc(err.message || err)}. Réessayez dans un instant.</p>`; }
     busy(false);
     if (my !== S.run) return;
     $("#out").innerHTML = html;
@@ -238,7 +261,7 @@
   function polyHeader(extra) {
     return `<div class="field"><label for="poly-coords">Coordonnées du polygone (longitude, latitude)</label><textarea id="poly-coords" rows="4" spellcheck="false" placeholder="[[-17.46,14.69],[-17.44,14.69],[-17.44,14.70]]"></textarea></div>
       ${extra || ""}
-      <div class="actions"><button class="btn btn-ghost btn-sm" type="button" id="poly-draw" style="color:#FFFFFF;border-color:rgba(255,255,255,.4)">${svg("draw", 16)} Dessiner</button><button class="btn btn-ghost btn-sm" type="button" id="poly-end" style="color:#FFFFFF;border-color:rgba(255,255,255,.4)">Terminer</button><button class="btn btn-primary btn-sm" type="button" id="poly-go">${svg("search", 16)} Recherche</button></div>`;
+      <div class="actions"><button class="btn btn-ghost btn-sm" type="button" id="poly-draw" style="color:#FFFFFF;border-color:rgba(255,255,255,.4)">${svg("draw", 16)} Dessiner</button><button class="btn btn-ghost btn-sm" type="button" id="poly-end" style="color:#FFFFFF;border-color:rgba(255,255,255,.4)">Terminer</button><button class="btn btn-ghost btn-sm" type="button" data-reset style="color:#FFFFFF;border-color:rgba(255,255,255,.4)">Réinitialiser</button><button class="btn btn-primary btn-sm" type="button" id="poly-go">${svg("search", 16)} Recherche</button></div>`;
   }
   function parsePoly(txt) {
     try {
@@ -300,7 +323,7 @@
       $("#gf").addEventListener("submit", e => { e.preventDefault(); go($("#g-q").value.trim()); });
       async function go(q) {
         if (!q) return;
-        busy(true); const r = await G.search(q, $("#g-cc").value, 5); busy(false);
+        busy(true); const r = await G.search(q, $("#g-cc").value, 5); busy(false); use(1);
         res.clearLayers();
         if (!r.length) { body(empty("globe", "Aucun résultat. Vérifiez l'orthographe ou élargissez la recherche.")); return; }
         r.forEach((x, i) => L.marker([x.lat, x.lon], { icon: numIcon(i + 1) }).addTo(res));
@@ -317,7 +340,7 @@
     }, onMap(ll) { $("#r-lat").value = ll.lat.toFixed(6); $("#r-lon").value = ll.lng.toFixed(6); rev(ll.lat, ll.lng); } }
   ] };
   async function rev(lat, lon) {
-    busy(true); const r = await G.reverse(lat, lon); busy(false);
+    busy(true); const r = await G.reverse(lat, lon); busy(false); use(1);
     res.clearLayers(); pin(lat, lon); L.marker([r.lat, r.lon], { icon: dotIcon() }).addTo(res);
     const a = r.address, d = G.dist([lat, lon], [r.lat, r.lon]);
     body(srcTag(r.src) + `<p class="r-title">${esc(r.label)}</p>` + kv([["Numéro", esc(a.numero)], ["Voie", esc(a.rue)], ["Quartier", esc(a.quartier)], ["Ville ou commune", esc(a.ville)], ["Département", esc(a.departement)], ["Région", esc(a.region)], ["Pays", esc(a.pays)], ["Distance au point cliqué", G.fmtKm(d)], ["Coordonnées", `<span class="mono">${lat.toFixed(5)}, ${lon.toFixed(5)}</span>`, 1]]));
@@ -453,7 +476,7 @@
       if (!$("#va-robot").checked) { toast("Cochez « Je ne suis pas un robot »."); return; }
       const a = $("#va-a").value.trim(); if (!a) { $("#va-a").focus(); return; }
       const q = [a, $("#va-c").value, $("#va-r").value].filter(Boolean).join(", ");
-      busy(true); const r = await G.search(q, $("#va-p").value, 1); busy(false);
+      busy(true); const r = await G.search(q, $("#va-p").value, 1); busy(false); use(1);
       res.clearLayers();
       const out = $("#va-out");
       if (!r.length || r[0].src !== "osm") {
@@ -494,6 +517,7 @@
         items.push({ label: `${names[i % 4]} ${String.fromCharCode(65 + (i % 26))}-${10 + i} (exemple)`, kind: "voie", pos, quartier: "", ville: "" });
       }
     }
+    use(1);
     renderAddresses(items, label, src);
   }
   function renderAddresses(items, label, src) {
@@ -551,7 +575,7 @@
     { label: "Par nom de limite", render() {
       head(`<form id="ad" autocomplete="off"><div class="field"><label for="ad-p">Pays</label><select id="ad-p" disabled><option>Sénégal</option></select></div><div class="row"><div class="field"><label for="ad-r">Région</label><select id="ad-r">${regionOptions("Dakar")}</select></div><div class="field"><label for="ad-d">Département</label><select id="ad-d">${deptOptions("Dakar", "Dakar", "Toute la région")}</select></div></div>
         <div class="field ac"><label for="ad-c">Commune ou localité (facultatif)</label><input id="ad-c" placeholder="Commencez à saisir : Médina, Yoff, Saly…" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="ad-list"><ul class="ac-list" id="ad-list" role="listbox" hidden></ul></div>
-        <div class="actions"><button class="btn btn-primary btn-sm" type="submit">${svg("search", 16)} Recherche</button></div></form>`);
+        <div class="actions"><button class="btn btn-ghost btn-sm" type="button" data-reset style="color:#FFFFFF;border-color:rgba(255,255,255,.4)">Réinitialiser</button><button class="btn btn-primary btn-sm" type="submit">${svg("search", 16)} Recherche</button></div></form>`);
       body(`<div id="out">${empty("mappin", "Choisissez une limite administrative pour lister ses adresses.")}</div>`);
       let picked = null, items = [], active = -1, token = 0;
       const input = $("#ad-c"), list = $("#ad-list");
@@ -777,7 +801,7 @@
   async function goRoute() {
     const my = ++S.run; busy(true);
     const r = await G.route([[PTS.a.lat, PTS.a.lon], [PTS.b.lat, PTS.b.lon]], S.mode);
-    busy(false); if (my !== S.run) return;
+    busy(false); use(5); if (my !== S.run) return;
     marks();
     const line = L.polyline(r.line, { color: BLUE, weight: 5, opacity: 0.85 }).addTo(res); fit(line.getBounds());
     $("#out").innerHTML = srcTag(r.src) + `<div class="totals"><span>Durée totale<b>${G.fmtMin(r.duration)}</b></span><span>Distance totale<b>${G.fmtKm(r.distance)}</b></span></div>` +
@@ -799,7 +823,7 @@
       for (const k of ["src", "dst"]) for (let i = 0; i < M[k].length; i++) { const v = $(`#mx-${k}-${i}`).value.trim(); if (v && (!M[k][i] || M[k][i].label !== v)) { const r = await G.search(v, "SN", 1); if (r[0]) M[k][i] = r[0]; } }
       const s = M.src.filter(Boolean), d = M.dst.filter(Boolean);
       if (!s.length || !d.length) { busy(false); toast("Indiquez au moins une source et une destination."); return; }
-      const t = await G.table(s.map(p => [p.lat, p.lon]), d.map(p => [p.lat, p.lon]), S.mode);
+      const t = await G.table(s.map(p => [p.lat, p.lon]), d.map(p => [p.lat, p.lon]), S.mode); use(5);
       busy(false); drawMx();
       const ls = i => String.fromCharCode(65 + i), ld = i => String.fromCharCode(88 + i > 90 ? 85 + i : 88 + i);
       $("#out").innerHTML = srcTag(t.src) + s.map((_, i) => d.map((__, j) => `<p class="r-title">${ls(i)} – ${ld(j)}</p>` + tbl(["", ""], [["Distance", G.fmtKm(t.distances[i][j])], ["Temps", G.fmtMin(t.durations[i][j])]])).join("")).join("");
@@ -861,7 +885,7 @@
     }).join("")}</ol>`;
   }
   async function poiRun(filters, where, center, label) {
-    let items, src = "osm";
+    let items, src = "osm"; use(1);
     try {
       const ql = `[out:json][timeout:25];(${filters.map(f => `nwr${f}(${where});`).join("")});out center tags 120;`;
       items = (await G.overpass(ql)).map(e => ({ e, pos: G.elPos(e), d: center ? G.dist(center, G.elPos(e)) : null })).filter(x => x.pos[0]);
@@ -1158,7 +1182,7 @@
       const syntax = /^[a-z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)+$/.test(m);
       if (!syntax) { out.innerHTML = `<div class="verdict bad">Syntaxe invalide</div>` + kv([["Adresse", esc(m) || "—"]]); return; }
       const domain = m.split("@")[1], local = m.split("@")[0];
-      busy(true); const mx = await G.mx(domain); busy(false);
+      busy(true); const mx = await G.mx(domain); busy(false); use(1);
       const disp = DISPOSABLE.includes(domain), role = /^(contact|info|admin|support|direction|secretariat|noreply|no-reply|webmaster|rh)$/.test(local);
       const verdict = mx.ok === false ? ["bad", "Domaine sans serveur de messagerie : l'adresse ne peut pas recevoir de courriels"] : disp ? ["warn", "Adresse jetable : à éviter pour un compte client"] : mx.ok === null ? ["warn", "Syntaxe valide ; serveur de messagerie non vérifié"] : ["ok", "L'adresse peut recevoir des courriels"];
       out.innerHTML = `<div class="verdict ${verdict[0]}">${verdict[1]}</div>` + kv([["Adresse", esc(m)], ["Domaine", esc(domain)], ["Serveur de messagerie (MX)", mx.ok ? esc(mx.records.slice(0, 2).join(" · ")) : mx.ok === false ? "Aucun" : "Non vérifié"], ["Adresse jetable", disp ? "Oui" : "Non"], ["Adresse de rôle", role ? "Oui (boîte partagée)" : "Non"], ["Domaine sénégalais", domain.endsWith(".sn") ? "Oui (.sn)" : "Non"]]) + srcTag(mx.src);
@@ -1175,7 +1199,7 @@
     $("#vt").addEventListener("submit", e => {
       e.preventDefault();
       if (!$("#vt-robot").checked) { toast("Cochez « Je ne suis pas un robot »."); return; }
-      const raw = $("#vt-n").value.trim(), out = $("#vt-out");
+      const raw = $("#vt-n").value.trim(), out = $("#vt-out"); use(1);
       let d = raw.replace(/[^\d+]/g, "");
       if (d.startsWith("00")) d = "+" + d.slice(2);
       if (!d.startsWith("+") && /^[37]\d{8}$/.test(d)) d = "+221" + d;
@@ -1211,6 +1235,8 @@
     return srcTag(src) + `<ol class="list-num">${items.map((x, i) => `<li data-i="${i}"><span class="num">${i + 1}</span><span>${esc(x.name)}<br><small>${esc(x.t.protection_title || x.t.designation || "Aire protégée")}</small></span><em>${G.fmtKm(x.d)}</em></li>`).join("")}</ol>` +
       `<p class="note">Les observations d'espèces (module NaturaSen) seront ajoutées avec les partenaires naturalistes ; les espèces sensibles seront floutées.</p>`;
   }, after() { document.querySelectorAll("#out .list-num li").forEach(li => li.onclick = () => { const m = res.getLayers().filter(l => l instanceof L.Marker)[+li.dataset.i + 1]; if (m) map.setView(m.getLatLng(), 12); }); } }] };
+
+  document.addEventListener("click", e => { if (e.target.closest("[data-reset]")) { e.preventDefault(); resetDemo(); } });
 
   /* ---------- Démarrage ---------- */
   S.cc = "SN";

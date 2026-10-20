@@ -1,5 +1,12 @@
 # Journal des modifications
 
+## 0.3.0 (2026-10)
+
+- Bouton « Réinitialiser » sur toutes les démos (et dans les formulaires de la démo Adresses).
+- Espace compte : menu utilisateur, tableau de bord (consommation, crédits, appels par API), mon compte (abonnement, profil, facturation), clés API (copie, secret masqué, régénération).
+- Module d'administration réservé au rôle admin : vue d'ensemble, utilisateurs (offre, crédits, suspension, invitation), catalogue (statut, visibilité), journal des actions.
+- Deux comptes de test : un administrateur et un utilisateur standard.
+
 ## 0.2.1 (2026-10)
 
 - Démo Adresses : saisie semi-automatique des communes et localités, emprise dessinée ou collée visible avant la recherche, zoom sur l'adresse au clic, export CSV de la liste.
