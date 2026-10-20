@@ -1,0 +1,96 @@
+# Généré depuis portal/assets/catalog.js par tools/generer_docs.py.
+openapi: 3.1.0
+info:
+  title: CEGIT – Fiscalité locale
+  version: 0.2.0
+  description: 'Impôts et taxes applicables à un lieu : TVA, contributions foncières et contribution économique
+    locale.
+
+
+    Statut : En spécification. Exemples de réponses fictifs.'
+  contact:
+    name: CEGIT
+    url: https://cegitgroup.com/fr
+    email: api@cegitgroup.com
+servers:
+- url: https://api.cegitgroup.com
+  description: Production (cible)
+- url: https://api-preprod.cegitgroup.com
+  description: Préproduction
+security:
+- apiKey: []
+tags:
+- name: Fiscalité locale
+  description: Référentiel CEGIT
+paths:
+  /v1/tax/local:
+    get:
+      summary: Fiscalité d'un lieu
+      description: Taux indicatifs, à confirmer auprès de l'administration fiscale.
+      operationId: v1_tax_local_get
+      tags:
+      - Fiscalité locale
+      responses:
+        '200':
+          description: Succès
+          content:
+            application/json:
+              example:
+                commune: Dakar-Plateau
+                tva_taux_normal_pct: 18
+                note: Taux indicatifs
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+      parameters:
+      - name: lat
+        in: query
+        required: true
+        description: Latitude (décimal)
+        schema:
+          type: number
+        example: '14.6928'
+      - name: lon
+        in: query
+        required: true
+        description: Longitude (décimal)
+        schema:
+          type: number
+        example: '-17.4467'
+      - name: type
+        in: query
+        required: false
+        description: general, foncier, commune (texte)
+        schema:
+          type: string
+        example: general
+components:
+  securitySchemes:
+    apiKey:
+      type: apiKey
+      in: header
+      name: X-API-Key
+  schemas:
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+  responses:
+    BadRequest:
+      description: Paramètre manquant ou invalide
+      content: &id001
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Unauthorized:
+      description: Clé absente ou invalide
+      content: *id001
+    TooManyRequests:
+      description: Quota dépassé (voir l'en-tête Retry-After)
+      content: *id001

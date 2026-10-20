@@ -1,0 +1,153 @@
+# Généré depuis portal/assets/catalog.js par tools/generer_docs.py.
+openapi: 3.1.0
+info:
+  title: CEGIT – Saisie automatique d'adresse
+  version: 0.2.0
+  description: 'Intégrez la recherche d''adresses avec suggestions à la frappe dans vos sites et applications mobiles.
+
+
+    Statut : Bêta. Exemples de réponses fictifs.'
+  contact:
+    name: CEGIT
+    url: https://cegitgroup.com/fr
+    email: api@cegitgroup.com
+servers:
+- url: https://api.cegitgroup.com
+  description: Production (cible)
+- url: https://api-preprod.cegitgroup.com
+  description: Préproduction
+security:
+- apiKey: []
+tags:
+- name: Saisie automatique d'adresse
+  description: Module GINDI
+paths:
+  /v1/autocomplete:
+    get:
+      summary: Suggérer des adresses
+      description: Réponse en moins de 100 ms, pensée pour un appel à chaque frappe.
+      operationId: v1_autocomplete_get
+      tags:
+      - Saisie automatique d'adresse
+      responses:
+        '200':
+          description: Succès
+          content:
+            application/json:
+              example:
+                query: Marché Mo
+                suggestions:
+                - label: Marché Moussanté, Thiès
+                  type: lieu
+                  score: 0.91
+                - label: Rue du Marché Moussanté, Thiès
+                  type: rue
+                  score: 0.84
+                - label: Marché Moderne, Mbour
+                  type: lieu
+                  score: 0.62
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+      parameters:
+      - name: text
+        in: query
+        required: true
+        description: Début de saisie (texte)
+        schema:
+          type: string
+        example: Marché Mo
+      - name: country
+        in: query
+        required: false
+        description: Pays (code ISO)
+        schema:
+          type: string
+        example: SN
+      - name: admin_only
+        in: query
+        required: false
+        description: Uniquement les zones administratives (booléen)
+        schema:
+          type: boolean
+        example: 'false'
+  /v1/autocomplete/ip:
+    get:
+      summary: Suggestions autour d'une adresse IP
+      description: Priorise les résultats proches de la position déduite de l'adresse IP.
+      operationId: v1_autocomplete_ip_get
+      tags:
+      - Saisie automatique d'adresse
+      responses:
+        '200':
+          description: Succès
+          content:
+            application/json:
+              example:
+                query: Lycée
+                centre:
+                  ville: Dakar
+                  source: ip
+                suggestions:
+                - label: Lycée Lamine Guèye, Dakar-Plateau
+                  distance_km: 2.1
+                - label: Lycée Blaise Diagne, Fann
+                  distance_km: 4.6
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+      parameters:
+      - name: text
+        in: query
+        required: true
+        description: Début de saisie (texte)
+        schema:
+          type: string
+        example: Lycée
+      - name: ip
+        in: query
+        required: false
+        description: Adresse IP (sinon celle de l'appelant) (IPv4)
+        schema:
+          type: string
+        example: 41.82.10.20
+      - name: radius_km
+        in: query
+        required: false
+        description: Rayon de recherche (décimal)
+        schema:
+          type: number
+        example: '15'
+components:
+  securitySchemes:
+    apiKey:
+      type: apiKey
+      in: header
+      name: X-API-Key
+  schemas:
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+  responses:
+    BadRequest:
+      description: Paramètre manquant ou invalide
+      content: &id001
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Unauthorized:
+      description: Clé absente ou invalide
+      content: *id001
+    TooManyRequests:
+      description: Quota dépassé (voir l'en-tête Retry-After)
+      content: *id001

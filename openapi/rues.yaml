@@ -1,0 +1,90 @@
+# Généré depuis portal/assets/catalog.js par tools/generer_docs.py.
+openapi: 3.1.0
+info:
+  title: CEGIT – Rues
+  version: 0.2.0
+  description: 'Trouvez la voie et l''intersection les plus proches, avec leur classe et leurs caractéristiques.
+
+
+    Statut : Bêta. Exemples de réponses fictifs.'
+  contact:
+    name: CEGIT
+    url: https://cegitgroup.com/fr
+    email: api@cegitgroup.com
+servers:
+- url: https://api.cegitgroup.com
+  description: Production (cible)
+- url: https://api-preprod.cegitgroup.com
+  description: Préproduction
+security:
+- apiKey: []
+tags:
+- name: Rues
+  description: Mobilité
+paths:
+  /v1/streets/nearest:
+    get:
+      summary: Voie la plus proche
+      description: Nom, classe, nombre de voies et vitesse autorisée si connue.
+      operationId: v1_streets_nearest_get
+      tags:
+      - Rues
+      responses:
+        '200':
+          description: Succès
+          content:
+            application/json:
+              example:
+                nom: Avenue Georges Pompidou
+                classe: Principale
+                voies: 2
+                vitesse_max_kmh: 50
+                distance_m: 12
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+      parameters:
+      - name: lat
+        in: query
+        required: true
+        description: Latitude (décimal)
+        schema:
+          type: number
+        example: '14.6928'
+      - name: lon
+        in: query
+        required: true
+        description: Longitude (décimal)
+        schema:
+          type: number
+        example: '-17.4467'
+components:
+  securitySchemes:
+    apiKey:
+      type: apiKey
+      in: header
+      name: X-API-Key
+  schemas:
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+  responses:
+    BadRequest:
+      description: Paramètre manquant ou invalide
+      content: &id001
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Unauthorized:
+      description: Clé absente ou invalide
+      content: *id001
+    TooManyRequests:
+      description: Quota dépassé (voir l'en-tête Retry-After)
+      content: *id001

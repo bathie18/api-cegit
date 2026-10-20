@@ -1,0 +1,83 @@
+# Généré depuis portal/assets/catalog.js par tools/generer_docs.py.
+openapi: 3.1.0
+info:
+  title: CEGIT – Vérification d'e-mail
+  version: 0.2.0
+  description: 'Vérifiez la syntaxe et le domaine d''une adresse électronique pour fiabiliser vos fichiers.
+
+
+    Statut : Prototype. Exemples de réponses fictifs.'
+  contact:
+    name: CEGIT
+    url: https://cegitgroup.com/fr
+    email: api@cegitgroup.com
+servers:
+- url: https://api.cegitgroup.com
+  description: Production (cible)
+- url: https://api-preprod.cegitgroup.com
+  description: Préproduction
+security:
+- apiKey: []
+tags:
+- name: Vérification d'e-mail
+  description: Vérification
+paths:
+  /v1/verify/email:
+    get:
+      summary: Vérifier une adresse e-mail
+      description: Syntaxe, domaine, serveur de messagerie, adresse jetable.
+      operationId: v1_verify_email_get
+      tags:
+      - Vérification d'e-mail
+      responses:
+        '200':
+          description: Succès
+          content:
+            application/json:
+              example:
+                email: contact@exemple.sn
+                syntaxe: true
+                domaine_mx: true
+                jetable: false
+                verdict: valide
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+      parameters:
+      - name: email
+        in: query
+        required: true
+        description: Adresse électronique (texte)
+        schema:
+          type: string
+        example: contact@exemple.sn
+components:
+  securitySchemes:
+    apiKey:
+      type: apiKey
+      in: header
+      name: X-API-Key
+  schemas:
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+  responses:
+    BadRequest:
+      description: Paramètre manquant ou invalide
+      content: &id001
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Unauthorized:
+      description: Clé absente ou invalide
+      content: *id001
+    TooManyRequests:
+      description: Quota dépassé (voir l'en-tête Retry-After)
+      content: *id001

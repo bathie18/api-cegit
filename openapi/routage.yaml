@@ -1,0 +1,143 @@
+# Généré depuis portal/assets/catalog.js par tools/generer_docs.py.
+openapi: 3.1.0
+info:
+  title: CEGIT – Routage
+  version: 0.2.0
+  description: 'Itinéraires détaillés en français et matrices de temps et de distances entre plusieurs lieux.
+
+
+    Statut : Bêta. Exemples de réponses fictifs.'
+  contact:
+    name: CEGIT
+    url: https://cegitgroup.com/fr
+    email: api@cegitgroup.com
+servers:
+- url: https://api.cegitgroup.com
+  description: Production (cible)
+- url: https://api-preprod.cegitgroup.com
+  description: Préproduction
+security:
+- apiKey: []
+tags:
+- name: Routage
+  description: Mobilité
+paths:
+  /v1/route:
+    post:
+      summary: Calculer un itinéraire
+      description: Itinéraire entre deux points ou plus, avec instructions en français.
+      operationId: v1_route_post
+      tags:
+      - Routage
+      responses:
+        '200':
+          description: Succès
+          content:
+            application/json:
+              example:
+                distance_km: 71.8
+                duree_min: 68
+                mode: auto
+                etapes:
+                - instruction: Prenez l'autoroute A1 vers Diamniadio
+                  distance_km: 32.1
+                - instruction: Continuez sur la N2 vers Thiès
+                  distance_km: 37.4
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                from:
+                  type: string
+                  description: Départ
+                  example: 14.6928,-17.4467
+                to:
+                  type: string
+                  description: Arrivée
+                  example: 14.7910,-16.9256
+                mode:
+                  type: string
+                  description: auto, pedestrian
+                  example: auto
+              required:
+              - from
+              - to
+  /v1/matrix:
+    post:
+      summary: Matrice des coûts
+      description: Temps et distances entre des sources et des destinations.
+      operationId: v1_matrix_post
+      tags:
+      - Routage
+      responses:
+        '200':
+          description: Succès
+          content:
+            application/json:
+              example:
+                distances_km:
+                - - 71.8
+                  - 264.3
+                durees_min:
+                - - 68
+                  - 236
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                sources:
+                  type: string
+                  description: Points de départ
+                  example: 14.6928,-17.4467
+                destinations:
+                  type: string
+                  description: Points d'arrivée
+                  example: 14.7910,-16.9256;16.0326,-16.4818
+              required:
+              - sources
+              - destinations
+components:
+  securitySchemes:
+    apiKey:
+      type: apiKey
+      in: header
+      name: X-API-Key
+  schemas:
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+  responses:
+    BadRequest:
+      description: Paramètre manquant ou invalide
+      content: &id001
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Unauthorized:
+      description: Clé absente ou invalide
+      content: *id001
+    TooManyRequests:
+      description: Quota dépassé (voir l'en-tête Retry-After)
+      content: *id001

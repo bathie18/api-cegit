@@ -1,0 +1,93 @@
+/* Charte CEGIT : orange #F39200, anthracite #3C3C3B, Ubuntu / Open Sans (reprise de carto-cegit-map). */
+:root{
+  --bg:#F6F6F4; --surface:#FFFFFF; --soft:#EEEEEB; --line:#E2E2DE;
+  --fg:#2B2B2A; --muted:#5A5A57;
+  --brand:#3C3C3B; --brand-deep:#2B2B2A; --on-brand:#FFFFFF; --on-brand-muted:#D9D9D6;
+  --accent:#F39200; --accent-strong:#D46F00; --accent-soft:#FDEBD3; --accent-ink:#8A4700;
+  --head-bg:#FFFFFF; --head-fg:#3C3C3B;
+  --code-bg:#2B2B2A; --code-fg:#EDEDEA; --code-key:#F7B866; --code-str:#A9D18E; --code-num:#8FC1F0; --code-dim:#9A9A94;
+  --get:#2E7D4F; --get-soft:#E1F1E7; --post:#2563A8; --post-soft:#E1ECF8;
+  --ok:#2E7D4F; --ok-soft:#E1F1E7; --warn:#9A6200; --warn-soft:#FBEFD8; --bad:#B3261E; --bad-soft:#FBE3E1; --plan:#5A5A57; --plan-soft:#EEEEEB;
+  --footer:#2B2B2A; --footer-fg:#D6D6D2;
+  --shadow:0 10px 24px rgba(30,30,30,.10);
+  --f-display:"Ubuntu",system-ui,sans-serif; --f-body:"Open Sans",system-ui,sans-serif; --f-mono:"Ubuntu Mono",ui-monospace,Consolas,monospace;
+  --r:10px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#161615; --surface:#1F1F1E; --soft:#2A2A28; --line:#353533;
+  --fg:#EDEDEA; --muted:#B0B0AB;
+  --brand:#2A2A28; --brand-deep:#121211; --on-brand:#FFFFFF; --on-brand-muted:#C9C9C5;
+  --accent:#F39200; --accent-strong:#F5A33A; --accent-soft:#3A2A18; --accent-ink:#F7B866;
+  --head-bg:#1F1F1E; --head-fg:#EDEDEA;
+  --code-bg:#121211; --code-fg:#EDEDEA; --code-key:#F7B866; --code-str:#A9D18E; --code-num:#8FC1F0; --code-dim:#8A8A84;
+  --get:#7BC79A; --get-soft:#1E3326; --post:#8FC1F0; --post-soft:#1C2C3F;
+  --ok:#7BC79A; --ok-soft:#1E3326; --warn:#F7B866; --warn-soft:#3A2A18; --bad:#F2A49D; --bad-soft:#3D1F1C; --plan:#B0B0AB; --plan-soft:#2A2A28;
+  --footer:#0F0F0E; --footer-fg:#C9C9C5; --shadow:0 10px 24px rgba(0,0,0,.45); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#161615; --surface:#1F1F1E; --soft:#2A2A28; --line:#353533;
+  --fg:#EDEDEA; --muted:#B0B0AB;
+  --brand:#2A2A28; --brand-deep:#121211; --on-brand:#FFFFFF; --on-brand-muted:#C9C9C5;
+  --accent:#F39200; --accent-strong:#F5A33A; --accent-soft:#3A2A18; --accent-ink:#F7B866;
+  --head-bg:#1F1F1E; --head-fg:#EDEDEA;
+  --code-bg:#121211; --code-fg:#EDEDEA; --code-key:#F7B866; --code-str:#A9D18E; --code-num:#8FC1F0; --code-dim:#8A8A84;
+  --get:#7BC79A; --get-soft:#1E3326; --post:#8FC1F0; --post-soft:#1C2C3F;
+  --ok:#7BC79A; --ok-soft:#1E3326; --warn:#F7B866; --warn-soft:#3A2A18; --bad:#F2A49D; --bad-soft:#3D1F1C; --plan:#B0B0AB; --plan-soft:#2A2A28;
+  --footer:#0F0F0E; --footer-fg:#C9C9C5; --shadow:0 10px 24px rgba(0,0,0,.45); color-scheme:dark}
+
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.6 var(--f-body)}
+a{color:var(--accent-ink)}
+h1,h2,h3,h4{font-family:var(--f-display);text-wrap:balance;margin:0;line-height:1.2}
+code,pre,.mono{font-family:var(--f-mono)}
+button{font:inherit;cursor:pointer;color:inherit}
+input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+[hidden]{display:none!important}
+.ico{fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.wrap{max-width:1280px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+
+/* Marque */
+.brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:inherit}
+.brand-mark{width:38px;height:38px;border-radius:9px;background:var(--accent);color:#FFFFFF;display:grid;place-items:center;flex:none}
+.brand-name{font-family:var(--f-display);font-size:20px;font-weight:500;letter-spacing:-.01em}
+.brand-name b{color:var(--accent);font-weight:700}
+.brand-sub{display:block;font-size:12px;color:var(--muted);line-height:1.1}
+
+/* Boutons */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border-radius:8px;padding:9px 16px;font-weight:600;font-size:14px;border:1px solid transparent;text-decoration:none;line-height:1.2;white-space:nowrap}
+.btn-primary{background:var(--accent);color:#2B2B2A;border-color:var(--accent)}
+.btn-primary:hover{background:var(--accent-strong);border-color:var(--accent-strong)}
+.btn-dark{background:var(--brand);color:#FFFFFF;border-color:var(--brand)}
+:root[data-theme="dark"] .btn-dark{border-color:#55554F}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .btn-dark{border-color:#55554F}}
+.btn-dark:hover{background:var(--brand-deep)}
+.btn-ghost{background:transparent;border-color:var(--line)}
+.btn-ghost:hover{border-color:var(--accent)}
+.btn-sm{padding:6px 12px;font-size:13px}
+.btn[disabled]{opacity:.55;cursor:not-allowed}
+.icon-btn{display:inline-grid;place-items:center;width:34px;height:34px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--fg)}
+.icon-btn:hover{border-color:var(--accent);color:var(--accent-ink)}
+
+/* Pastilles de statut */
+.pill{display:inline-flex;align-items:center;gap:5px;border-radius:999px;padding:2px 9px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;white-space:nowrap}
+.pill::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.st-beta{background:var(--warn-soft);color:var(--warn)}
+.st-spec{background:var(--plan-soft);color:var(--plan)}
+.st-proto{background:var(--get-soft);color:var(--ok)}
+
+/* Fenêtre de connexion */
+.modal{border:0;border-radius:14px;padding:0;width:min(420px,calc(100vw - 32px));background:var(--surface);color:var(--fg);box-shadow:0 24px 60px rgba(0,0,0,.35)}
+.modal::backdrop{background:rgba(20,20,20,.55)}
+.modal-head{display:flex;align-items:center;gap:12px;padding:20px 22px 0}
+.modal-head h2{font-size:20px;flex:1}
+.modal form{padding:16px 22px 22px;display:grid;gap:12px}
+.field{display:flex;flex-direction:column;gap:4px}
+.field label{font-size:12px;font-weight:600;color:var(--muted)}
+.field input,.field select,.field textarea{padding:9px 11px;border:1px solid var(--line);border-radius:8px;background:var(--bg);width:100%;font-size:14px}
+.field input:focus,.field select:focus,.field textarea:focus{outline:2px solid var(--accent);outline-offset:0;border-color:var(--accent)}
+.form-err{color:var(--bad);font-size:13px;min-height:1em;margin:0}
+.form-note{font-size:12px;color:var(--muted);margin:0}
+
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--brand-deep);color:#FFFFFF;padding:10px 16px;border-radius:8px;font-size:14px;box-shadow:var(--shadow);z-index:3000;max-width:calc(100vw - 32px)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}

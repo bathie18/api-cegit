@@ -1,0 +1,131 @@
+# Généré depuis portal/assets/catalog.js par tools/generer_docs.py.
+openapi: 3.1.0
+info:
+  title: CEGIT – Secours 18
+  version: 0.2.0
+  description: 'Centre de secours compétent et services d''urgence d''un lieu, pour les plateformes d''appel et
+    la cartographie opérationnelle.
+
+
+    Statut : En spécification. Exemples de réponses fictifs.'
+  contact:
+    name: CEGIT
+    url: https://cegitgroup.com/fr
+    email: api@cegitgroup.com
+servers:
+- url: https://api.cegitgroup.com
+  description: Production (cible)
+- url: https://api-preprod.cegitgroup.com
+  description: Préproduction
+security:
+- apiKey: []
+tags:
+- name: Secours 18
+  description: Module WALLU
+paths:
+  /v1/emergency/competent-center:
+    get:
+      summary: Centre de secours compétent
+      description: Centre de la BNSP le plus rapide à rejoindre le lieu.
+      operationId: v1_emergency_competent_center_get
+      tags:
+      - Secours 18
+      responses:
+        '200':
+          description: Succès
+          content:
+            application/json:
+              example:
+                centre: Centre de secours de Thiès (donnée de démonstration)
+                numero_urgence: '18'
+                delai_min: 7
+                distance_km: 3.4
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+      parameters:
+      - name: lat
+        in: query
+        required: true
+        description: Latitude (décimal)
+        schema:
+          type: number
+        example: '14.791'
+      - name: lon
+        in: query
+        required: true
+        description: Longitude (décimal)
+        schema:
+          type: number
+        example: '-16.9256'
+  /v1/emergency/services:
+    get:
+      summary: Services d'urgence
+      description: Sapeurs-pompiers, SAMU, police ou gendarmerie compétents.
+      operationId: v1_emergency_services_get
+      tags:
+      - Secours 18
+      responses:
+        '200':
+          description: Succès
+          content:
+            application/json:
+              example:
+                services:
+                - type: Sapeurs-pompiers
+                  numero: '18'
+                - type: SAMU
+                  numero: '1515'
+                - type: Police
+                  numero: '17'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+      parameters:
+      - name: lat
+        in: query
+        required: true
+        description: Latitude (décimal)
+        schema:
+          type: number
+        example: '14.791'
+      - name: lon
+        in: query
+        required: true
+        description: Longitude (décimal)
+        schema:
+          type: number
+        example: '-16.9256'
+components:
+  securitySchemes:
+    apiKey:
+      type: apiKey
+      in: header
+      name: X-API-Key
+  schemas:
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+  responses:
+    BadRequest:
+      description: Paramètre manquant ou invalide
+      content: &id001
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Unauthorized:
+      description: Clé absente ou invalide
+      content: *id001
+    TooManyRequests:
+      description: Quota dépassé (voir l'en-tête Retry-After)
+      content: *id001

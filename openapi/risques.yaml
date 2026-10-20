@@ -1,0 +1,172 @@
+# Généré depuis portal/assets/catalog.js par tools/generer_docs.py.
+openapi: 3.1.0
+info:
+  title: CEGIT – Risques
+  version: 0.2.0
+  description: 'Exposition aux inondations, à l''érosion côtière, aux feux de brousse et à l''accidentalité routière.
+
+
+    Statut : Bêta. Exemples de réponses fictifs.'
+  contact:
+    name: CEGIT
+    url: https://cegitgroup.com/fr
+    email: api@cegitgroup.com
+servers:
+- url: https://api.cegitgroup.com
+  description: Production (cible)
+- url: https://api-preprod.cegitgroup.com
+  description: Préproduction
+security:
+- apiKey: []
+tags:
+- name: Risques
+  description: Module WALLU
+paths:
+  /v1/risks/flood:
+    get:
+      summary: Risque inondation
+      description: Niveau d'aléa et événements recensés.
+      operationId: v1_risks_flood_get
+      tags:
+      - Risques
+      responses:
+        '200':
+          description: Succès
+          content:
+            application/json:
+              example:
+                alea: fort
+                hauteur_eau_m: 0.8
+                evenements_recenses: 3
+                note: Donnée de démonstration
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+      parameters:
+      - name: lat
+        in: query
+        required: true
+        description: Latitude (décimal)
+        schema:
+          type: number
+        example: '14.7547'
+      - name: lon
+        in: query
+        required: true
+        description: Longitude (décimal)
+        schema:
+          type: number
+        example: '-17.39'
+  /v1/risks/coastal-erosion:
+    get:
+      summary: Érosion côtière
+      description: Recul du trait de côte et distance au rivage.
+      operationId: v1_risks_coastal_erosion_get
+      tags:
+      - Risques
+      responses:
+        '200':
+          description: Succès
+          content:
+            application/json:
+              example:
+                niveau: élevé
+                recul_m_an: 1.2
+                distance_rivage_m: 180
+                note: Donnée de démonstration
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+      parameters:
+      - name: lat
+        in: query
+        required: true
+        description: Latitude (décimal)
+        schema:
+          type: number
+        example: '14.7158'
+      - name: lon
+        in: query
+        required: true
+        description: Longitude (décimal)
+        schema:
+          type: number
+        example: '-17.2733'
+  /v1/risks/road-safety:
+    get:
+      summary: Accidentalité routière
+      description: Accidents recensés dans un rayon donné.
+      operationId: v1_risks_road_safety_get
+      tags:
+      - Risques
+      responses:
+        '200':
+          description: Succès
+          content:
+            application/json:
+              example:
+                accidents_3_ans: 41
+                dont_mortels: 3
+                niveau: au-dessus de la moyenne
+                note: Donnée de démonstration
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+      parameters:
+      - name: lat
+        in: query
+        required: true
+        description: Latitude (décimal)
+        schema:
+          type: number
+        example: '14.791'
+      - name: lon
+        in: query
+        required: true
+        description: Longitude (décimal)
+        schema:
+          type: number
+        example: '-16.9256'
+      - name: radius_m
+        in: query
+        required: false
+        description: Rayon (décimal)
+        schema:
+          type: number
+        example: '1000'
+components:
+  securitySchemes:
+    apiKey:
+      type: apiKey
+      in: header
+      name: X-API-Key
+  schemas:
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+  responses:
+    BadRequest:
+      description: Paramètre manquant ou invalide
+      content: &id001
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Unauthorized:
+      description: Clé absente ou invalide
+      content: *id001
+    TooManyRequests:
+      description: Quota dépassé (voir l'en-tête Retry-After)
+      content: *id001

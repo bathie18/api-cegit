@@ -1,14 +1,15 @@
 # Biodiversité
 
-> Observations de faune et de flore, référentiel taxonomique et sensibilité des espèces.
+> Aires protégées et observations de faune et de flore autour d'un lieu.
 
 | | |
 |---|---|
 | Module | Module NaturaSen |
-| Famille | Risques et environnement |
+| Famille | Environnement |
 | Statut | En spécification |
-| Composants | PostGIS, pygeoapi |
+| Composants | PostGIS, pygeoapi, OpenStreetMap |
 | Spécification | [`openapi/biodiversite.yaml`](../../openapi/biodiversite.yaml) |
+| Démonstration | [https://bathie18.github.io/api-cegit/demo.html#biodiversite](https://bathie18.github.io/api-cegit/demo.html#biodiversite) (compte requis) |
 
 ## Description fonctionnelle
 
@@ -26,19 +27,20 @@ _À compléter : public, clé simple, ou compte habilité (rôle Keycloak)._
 
 ## Points d'accès
 
-### `GET /v1/taxa/occurrences` : Observations dans une emprise
+### `GET /v1/biodiversity/protected-areas` : Aires protégées proches
 
-Les espèces sensibles sont floutées à la maille.
+Parcs, réserves et forêts classées.
 
 | Paramètre | Type | Requis | Description | Exemple |
 |---|---|---|---|---|
-| `bbox` | 4 décimaux | oui | ouest,sud,est,nord | `-17.2,14.6,-16.8,14.9` |
-| `taxon` | texte | non | Nom scientifique | |
+| `lat` | décimal | oui | Latitude | `14.791` |
+| `lon` | décimal | oui | Longitude | `-16.9256` |
+| `radius_km` | décimal | non | Rayon | `50` |
 
 **Exemple d'appel**
 
 ```bash
-curl "https://api.cegitgroup.com/v1/taxa/occurrences?bbox=-17.2,14.6,-16.8,14.9" \
+curl "https://api.cegitgroup.com/v1/biodiversity/protected-areas?lat=14.791&lon=-16.9256&radius_km=50" \
   -H "X-API-Key: $CEGIT_KEY"
 ```
 
@@ -46,20 +48,12 @@ curl "https://api.cegitgroup.com/v1/taxa/occurrences?bbox=-17.2,14.6,-16.8,14.9"
 
 ```json
 {
-  "bbox": "-17.2,14.6,-16.8,14.9",
-  "total": 2,
   "items": [
     {
-      "taxon": "Adansonia digitata",
-      "observations": 42
-    },
-    {
-      "taxon": "Balearica pavonina",
-      "observations": 5,
-      "floute": true
+      "nom": "Réserve de Bandia",
+      "distance_km": 38
     }
-  ],
-  "note": "Données fictives de démonstration"
+  ]
 }
 ```
 

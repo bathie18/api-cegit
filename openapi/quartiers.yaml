@@ -1,0 +1,90 @@
+# Généré depuis portal/assets/catalog.js par tools/generer_docs.py.
+openapi: 3.1.0
+info:
+  title: CEGIT – Quartiers
+  version: 0.2.0
+  description: 'Nom du quartier ou du village d''un point, avec sa typologie urbaine (centre, résidentiel, périurbain,
+    rural).
+
+
+    Statut : En spécification. Exemples de réponses fictifs.'
+  contact:
+    name: CEGIT
+    url: https://cegitgroup.com/fr
+    email: api@cegitgroup.com
+servers:
+- url: https://api.cegitgroup.com
+  description: Production (cible)
+- url: https://api-preprod.cegitgroup.com
+  description: Préproduction
+security:
+- apiKey: []
+tags:
+- name: Quartiers
+  description: Référentiel CEGIT
+paths:
+  /v1/neighborhoods/lookup:
+    get:
+      summary: Quartier d'un point
+      description: Nom, commune et typologie.
+      operationId: v1_neighborhoods_lookup_get
+      tags:
+      - Quartiers
+      responses:
+        '200':
+          description: Succès
+          content:
+            application/json:
+              example:
+                quartier: Sicap Liberté
+                commune: Sicap-Liberté
+                typologie: Résidentiel dense
+                source: OpenStreetMap + CEGIT
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+      parameters:
+      - name: lat
+        in: query
+        required: true
+        description: Latitude (décimal)
+        schema:
+          type: number
+        example: '14.718'
+      - name: lon
+        in: query
+        required: true
+        description: Longitude (décimal)
+        schema:
+          type: number
+        example: '-17.456'
+components:
+  securitySchemes:
+    apiKey:
+      type: apiKey
+      in: header
+      name: X-API-Key
+  schemas:
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+  responses:
+    BadRequest:
+      description: Paramètre manquant ou invalide
+      content: &id001
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Unauthorized:
+      description: Clé absente ou invalide
+      content: *id001
+    TooManyRequests:
+      description: Quota dépassé (voir l'en-tête Retry-After)
+      content: *id001

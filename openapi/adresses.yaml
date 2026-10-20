@@ -1,0 +1,137 @@
+# Généré depuis portal/assets/catalog.js par tools/generer_docs.py.
+openapi: 3.1.0
+info:
+  title: CEGIT – Adresses
+  version: 0.2.0
+  description: 'Listez les adresses d''une région, d''un département, d''une commune ou d''une zone dessinée.
+
+
+    Statut : Bêta. Exemples de réponses fictifs.'
+  contact:
+    name: CEGIT
+    url: https://cegitgroup.com/fr
+    email: api@cegitgroup.com
+servers:
+- url: https://api.cegitgroup.com
+  description: Production (cible)
+- url: https://api-preprod.cegitgroup.com
+  description: Préproduction
+security:
+- apiKey: []
+tags:
+- name: Adresses
+  description: Module GINDI
+paths:
+  /v1/addresses/by-boundary-name:
+    get:
+      summary: Adresses par nom de limite
+      description: Région, département ou commune.
+      operationId: v1_addresses_by_boundary_name_get
+      tags:
+      - Adresses
+      responses:
+        '200':
+          description: Succès
+          content:
+            application/json:
+              example:
+                limite: Pikine
+                total: 1840
+                items:
+                - label: Rue PK-12, Pikine
+                - label: Avenue Cheikh Ahmadou Bamba, Pikine
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+      parameters:
+      - name: region
+        in: query
+        required: true
+        description: Région (texte)
+        schema:
+          type: string
+        example: Dakar
+      - name: departement
+        in: query
+        required: false
+        description: Département (texte)
+        schema:
+          type: string
+        example: Pikine
+      - name: limit
+        in: query
+        required: false
+        description: Nombre maximum (entier)
+        schema:
+          type: integer
+        example: '20'
+  /v1/addresses/by-boundary:
+    post:
+      summary: Adresses dans un polygone
+      description: Géométrie GeoJSON en WGS 84.
+      operationId: v1_addresses_by_boundary_post
+      tags:
+      - Adresses
+      responses:
+        '200':
+          description: Succès
+          content:
+            application/json:
+              example:
+                total: 212
+                items:
+                - label: Rue 6, Médina, Dakar
+                - label: Rue 11, Médina, Dakar
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                geometry:
+                  type: string
+                  description: Polygone
+                  example: '{"type":"Polygon","coordinates":[[[-17.46,14.69],[-17.44,14.69],[-17.44,14.70],[-17.46,14.69]]]}'
+                limit:
+                  type: integer
+                  description: Nombre maximum
+                  example: '20'
+              required:
+              - geometry
+components:
+  securitySchemes:
+    apiKey:
+      type: apiKey
+      in: header
+      name: X-API-Key
+  schemas:
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+  responses:
+    BadRequest:
+      description: Paramètre manquant ou invalide
+      content: &id001
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Unauthorized:
+      description: Clé absente ou invalide
+      content: *id001
+    TooManyRequests:
+      description: Quota dépassé (voir l'en-tête Retry-After)
+      content: *id001

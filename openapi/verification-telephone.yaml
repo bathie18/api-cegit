@@ -1,0 +1,82 @@
+# Généré depuis portal/assets/catalog.js par tools/generer_docs.py.
+openapi: 3.1.0
+info:
+  title: CEGIT – Vérification téléphonique
+  version: 0.2.0
+  description: 'Vérifiez le format d''un numéro et identifiez l''opérateur et le type de ligne.
+
+
+    Statut : Prototype. Exemples de réponses fictifs.'
+  contact:
+    name: CEGIT
+    url: https://cegitgroup.com/fr
+    email: api@cegitgroup.com
+servers:
+- url: https://api.cegitgroup.com
+  description: Production (cible)
+- url: https://api-preprod.cegitgroup.com
+  description: Préproduction
+security:
+- apiKey: []
+tags:
+- name: Vérification téléphonique
+  description: Vérification
+paths:
+  /v1/verify/phone:
+    get:
+      summary: Vérifier un numéro
+      description: Notation E.164, opérateur d'attribution, mobile ou fixe.
+      operationId: v1_verify_phone_get
+      tags:
+      - Vérification téléphonique
+      responses:
+        '200':
+          description: Succès
+          content:
+            application/json:
+              example:
+                numero: '+221770000000'
+                valide: true
+                operateur: Orange (Sonatel)
+                type: mobile
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+      parameters:
+      - name: phone
+        in: query
+        required: true
+        description: Numéro avec indicatif (texte)
+        schema:
+          type: string
+        example: +221 77 000 00 00
+components:
+  securitySchemes:
+    apiKey:
+      type: apiKey
+      in: header
+      name: X-API-Key
+  schemas:
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+  responses:
+    BadRequest:
+      description: Paramètre manquant ou invalide
+      content: &id001
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Unauthorized:
+      description: Clé absente ou invalide
+      content: *id001
+    TooManyRequests:
+      description: Quota dépassé (voir l'en-tête Retry-After)
+      content: *id001

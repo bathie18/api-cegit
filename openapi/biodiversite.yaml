@@ -1,9 +1,9 @@
-# Généré depuis le catalogue du portail. À compléter au fil des spécifications.
+# Généré depuis portal/assets/catalog.js par tools/generer_docs.py.
 openapi: 3.1.0
 info:
   title: CEGIT – Biodiversité
-  version: 0.1.0
-  description: 'Observations de faune et de flore, référentiel taxonomique et sensibilité des espèces.
+  version: 0.2.0
+  description: 'Aires protégées et observations de faune et de flore autour d''un lieu.
 
 
     Statut : En spécification. Exemples de réponses fictifs.'
@@ -22,11 +22,11 @@ tags:
 - name: Biodiversité
   description: Module NaturaSen
 paths:
-  /v1/taxa/occurrences:
+  /v1/biodiversity/protected-areas:
     get:
-      summary: Observations dans une emprise
-      description: Les espèces sensibles sont floutées à la maille.
-      operationId: v1_taxa_occurrences_get
+      summary: Aires protégées proches
+      description: Parcs, réserves et forêts classées.
+      operationId: v1_biodiversity_protected_areas_get
       tags:
       - Biodiversité
       responses:
@@ -35,15 +35,9 @@ paths:
           content:
             application/json:
               example:
-                bbox: -17.2,14.6,-16.8,14.9
-                total: 2
                 items:
-                - taxon: Adansonia digitata
-                  observations: 42
-                - taxon: Balearica pavonina
-                  observations: 5
-                  floute: true
-                note: Données fictives de démonstration
+                - nom: Réserve de Bandia
+                  distance_km: 38
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -51,20 +45,27 @@ paths:
         '429':
           $ref: '#/components/responses/TooManyRequests'
       parameters:
-      - name: bbox
+      - name: lat
         in: query
         required: true
-        description: ouest,sud,est,nord (4 décimaux)
+        description: Latitude (décimal)
         schema:
-          type: string
-        example: -17.2,14.6,-16.8,14.9
-      - name: taxon
+          type: number
+        example: '14.791'
+      - name: lon
+        in: query
+        required: true
+        description: Longitude (décimal)
+        schema:
+          type: number
+        example: '-16.9256'
+      - name: radius_km
         in: query
         required: false
-        description: Nom scientifique (texte)
+        description: Rayon (décimal)
         schema:
-          type: string
-        example: ''
+          type: number
+        example: '50'
 components:
   securitySchemes:
     apiKey:
@@ -82,19 +83,13 @@ components:
   responses:
     BadRequest:
       description: Paramètre manquant ou invalide
-      content:
+      content: &id001
         application/json:
           schema:
             $ref: '#/components/schemas/Error'
     Unauthorized:
       description: Clé absente ou invalide
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
+      content: *id001
     TooManyRequests:
       description: Quota dépassé (voir l'en-tête Retry-After)
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
+      content: *id001

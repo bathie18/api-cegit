@@ -1,0 +1,101 @@
+# Généré depuis portal/assets/catalog.js par tools/generer_docs.py.
+openapi: 3.1.0
+info:
+  title: CEGIT – Vérification d'adresse
+  version: 0.2.0
+  description: 'Vérifiez qu''une adresse existe, normalisez-la et assurez la bonne remise des courriers et colis.
+
+
+    Statut : En spécification. Exemples de réponses fictifs.'
+  contact:
+    name: CEGIT
+    url: https://cegitgroup.com/fr
+    email: api@cegitgroup.com
+servers:
+- url: https://api.cegitgroup.com
+  description: Production (cible)
+- url: https://api-preprod.cegitgroup.com
+  description: Préproduction
+security:
+- apiKey: []
+tags:
+- name: Vérification d'adresse
+  description: Module GINDI
+paths:
+  /v1/address/verify:
+    post:
+      summary: Vérifier une adresse
+      description: Renvoie l'adresse normalisée, sa position et un indice de confiance.
+      operationId: v1_address_verify_post
+      tags:
+      - Vérification d'adresse
+      responses:
+        '200':
+          description: Succès
+          content:
+            application/json:
+              example:
+                statut: verifiee
+                adresse_normalisee: Rue 10 angle Rue 13, Médina, Dakar
+                confiance: 0.82
+                coordinates:
+                - -17.4497
+                - 14.6808
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                adresse:
+                  type: string
+                  description: Ligne d'adresse
+                  example: Rue 10 x 13, Médina
+                complement:
+                  type: string
+                  description: Complément
+                  example: ''
+                commune:
+                  type: string
+                  description: Commune
+                  example: Dakar
+                country:
+                  type: string
+                  description: Pays
+                  example: SN
+              required:
+              - adresse
+components:
+  securitySchemes:
+    apiKey:
+      type: apiKey
+      in: header
+      name: X-API-Key
+  schemas:
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+  responses:
+    BadRequest:
+      description: Paramètre manquant ou invalide
+      content: &id001
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Unauthorized:
+      description: Clé absente ou invalide
+      content: *id001
+    TooManyRequests:
+      description: Quota dépassé (voir l'en-tête Retry-After)
+      content: *id001

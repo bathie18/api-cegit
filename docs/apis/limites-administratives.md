@@ -1,14 +1,15 @@
 # Limites administratives
 
-> Région, département, arrondissement et commune d'un point, ou géométrie d'une entité.
+> Région, département, arrondissement et commune d'un point, avec la géométrie de chaque entité.
 
 | | |
 |---|---|
 | Module | Référentiel CEGIT |
-| Famille | Référentiels territoriaux |
+| Famille | Cartographie et territoires |
 | Statut | Prototype |
 | Composants | PostGIS, pygeoapi, OGC API Features |
 | Spécification | [`openapi/limites-administratives.yaml`](../../openapi/limites-administratives.yaml) |
+| Démonstration | [https://bathie18.github.io/api-cegit/demo.html#limites-administratives](https://bathie18.github.io/api-cegit/demo.html#limites-administratives) (compte requis) |
 
 ## Description fonctionnelle
 
@@ -26,9 +27,9 @@ _À compléter : public, clé simple, ou compte habilité (rôle Keycloak)._
 
 ## Points d'accès
 
-### `GET /v1/boundaries/lookup` : Trouver les entités d'un point
+### `GET /v1/boundaries/lookup` : Entités d'un point
 
-Intersection point dans polygone sur tous les niveaux administratifs.
+Intersection sur tous les niveaux administratifs.
 
 | Paramètre | Type | Requis | Description | Exemple |
 |---|---|---|---|---|
@@ -62,16 +63,14 @@ curl "https://api.cegitgroup.com/v1/boundaries/lookup?lat=14.6928&lon=-17.4467" 
     "nom": "Dakar-Plateau"
   },
   "commune": {
-    "code": "01111",
     "nom": "Dakar-Plateau"
-  },
-  "millesime": "2024"
+  }
 }
 ```
 
 ### `GET /v1/boundaries/{niveau}/{code}` : Géométrie d'une entité
 
-Renvoie la géométrie simplifiée ou complète.
+Géométrie simplifiée ou complète.
 
 | Paramètre | Type | Requis | Description | Exemple |
 |---|---|---|---|---|

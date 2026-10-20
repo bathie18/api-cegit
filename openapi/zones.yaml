@@ -1,0 +1,163 @@
+# Généré depuis portal/assets/catalog.js par tools/generer_docs.py.
+openapi: 3.1.0
+info:
+  title: CEGIT – Zones
+  version: 0.2.0
+  description: 'Zones accessibles en temps ou en distance de trajet, zones tampons et zones autour d''un lieu.
+
+
+    Statut : Bêta. Exemples de réponses fictifs.'
+  contact:
+    name: CEGIT
+    url: https://cegitgroup.com/fr
+    email: api@cegitgroup.com
+servers:
+- url: https://api.cegitgroup.com
+  description: Production (cible)
+- url: https://api-preprod.cegitgroup.com
+  description: Préproduction
+security:
+- apiKey: []
+tags:
+- name: Zones
+  description: Mobilité
+paths:
+  /v1/isochrone:
+    get:
+      summary: Zone accessible en N minutes
+      description: Polygones d'accessibilité pour plusieurs durées.
+      operationId: v1_isochrone_get
+      tags:
+      - Zones
+      responses:
+        '200':
+          description: Succès
+          content:
+            application/json:
+              example:
+                type: FeatureCollection
+                features:
+                - type: Feature
+                  properties:
+                    minutes: 10
+                    mode: auto
+                  geometry:
+                    type: Polygon
+                    coordinates: '[…]'
+                - type: Feature
+                  properties:
+                    minutes: 20
+                    mode: auto
+                  geometry:
+                    type: Polygon
+                    coordinates: '[…]'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+      parameters:
+      - name: lat
+        in: query
+        required: true
+        description: Latitude (décimal)
+        schema:
+          type: number
+        example: '14.791'
+      - name: lon
+        in: query
+        required: true
+        description: Longitude (décimal)
+        schema:
+          type: number
+        example: '-16.9256'
+      - name: minutes
+        in: query
+        required: true
+        description: Durées séparées par des virgules (liste)
+        schema:
+          type: string
+        example: 10,20
+      - name: mode
+        in: query
+        required: false
+        description: auto, pedestrian (texte)
+        schema:
+          type: string
+        example: auto
+  /v1/buffer:
+    get:
+      summary: Zone tampon
+      description: Cercle géodésique autour d'un point.
+      operationId: v1_buffer_get
+      tags:
+      - Zones
+      responses:
+        '200':
+          description: Succès
+          content:
+            application/json:
+              example:
+                type: Feature
+                properties:
+                  rayon_m: 1000
+                  surface_km2: 3.14
+                geometry:
+                  type: Polygon
+                  coordinates: '[…]'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+      parameters:
+      - name: lat
+        in: query
+        required: true
+        description: Latitude (décimal)
+        schema:
+          type: number
+        example: '14.791'
+      - name: lon
+        in: query
+        required: true
+        description: Longitude (décimal)
+        schema:
+          type: number
+        example: '-16.9256'
+      - name: radius_m
+        in: query
+        required: true
+        description: Rayon en mètres (décimal)
+        schema:
+          type: number
+        example: '1000'
+components:
+  securitySchemes:
+    apiKey:
+      type: apiKey
+      in: header
+      name: X-API-Key
+  schemas:
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+  responses:
+    BadRequest:
+      description: Paramètre manquant ou invalide
+      content: &id001
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Unauthorized:
+      description: Clé absente ou invalide
+      content: *id001
+    TooManyRequests:
+      description: Quota dépassé (voir l'en-tête Retry-After)
+      content: *id001

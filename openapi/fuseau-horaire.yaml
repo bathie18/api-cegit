@@ -1,0 +1,89 @@
+# Généré depuis portal/assets/catalog.js par tools/generer_docs.py.
+openapi: 3.1.0
+info:
+  title: CEGIT – Fuseau horaire
+  version: 0.2.0
+  description: 'Fuseau horaire, heure locale et décalage UTC d''un lieu, pour vos applications et traitements.
+
+
+    Statut : Prototype. Exemples de réponses fictifs.'
+  contact:
+    name: CEGIT
+    url: https://cegitgroup.com/fr
+    email: api@cegitgroup.com
+servers:
+- url: https://api.cegitgroup.com
+  description: Production (cible)
+- url: https://api-preprod.cegitgroup.com
+  description: Préproduction
+security:
+- apiKey: []
+tags:
+- name: Fuseau horaire
+  description: Référentiel CEGIT
+paths:
+  /v1/timezone:
+    get:
+      summary: Fuseau d'un point
+      description: Nom IANA, décalage UTC et heure d'été éventuelle.
+      operationId: v1_timezone_get
+      tags:
+      - Fuseau horaire
+      responses:
+        '200':
+          description: Succès
+          content:
+            application/json:
+              example:
+                fuseau: Africa/Dakar
+                nom: Temps universel coordonné (GMT)
+                decalage_utc_s: 0
+                heure_ete: false
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+      parameters:
+      - name: lat
+        in: query
+        required: true
+        description: Latitude (décimal)
+        schema:
+          type: number
+        example: '14.6928'
+      - name: lon
+        in: query
+        required: true
+        description: Longitude (décimal)
+        schema:
+          type: number
+        example: '-17.4467'
+components:
+  securitySchemes:
+    apiKey:
+      type: apiKey
+      in: header
+      name: X-API-Key
+  schemas:
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+  responses:
+    BadRequest:
+      description: Paramètre manquant ou invalide
+      content: &id001
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Unauthorized:
+      description: Clé absente ou invalide
+      content: *id001
+    TooManyRequests:
+      description: Quota dépassé (voir l'en-tête Retry-After)
+      content: *id001

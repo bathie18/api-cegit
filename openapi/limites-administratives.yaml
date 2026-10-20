@@ -1,9 +1,9 @@
-# Généré depuis le catalogue du portail. À compléter au fil des spécifications.
+# Généré depuis portal/assets/catalog.js par tools/generer_docs.py.
 openapi: 3.1.0
 info:
   title: CEGIT – Limites administratives
-  version: 0.1.0
-  description: 'Région, département, arrondissement et commune d''un point, ou géométrie d''une entité.
+  version: 0.2.0
+  description: 'Région, département, arrondissement et commune d''un point, avec la géométrie de chaque entité.
 
 
     Statut : Prototype. Exemples de réponses fictifs.'
@@ -24,8 +24,8 @@ tags:
 paths:
   /v1/boundaries/lookup:
     get:
-      summary: Trouver les entités d'un point
-      description: Intersection point dans polygone sur tous les niveaux administratifs.
+      summary: Entités d'un point
+      description: Intersection sur tous les niveaux administratifs.
       operationId: v1_boundaries_lookup_get
       tags:
       - Limites administratives
@@ -47,9 +47,7 @@ paths:
                 arrondissement:
                   nom: Dakar-Plateau
                 commune:
-                  code: '01111'
                   nom: Dakar-Plateau
-                millesime: '2024'
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -74,7 +72,7 @@ paths:
   /v1/boundaries/{niveau}/{code}:
     get:
       summary: Géométrie d'une entité
-      description: Renvoie la géométrie simplifiée ou complète.
+      description: Géométrie simplifiée ou complète.
       operationId: v1_boundaries_niveau_code_get
       tags:
       - Limites administratives
@@ -138,19 +136,13 @@ components:
   responses:
     BadRequest:
       description: Paramètre manquant ou invalide
-      content:
+      content: &id001
         application/json:
           schema:
             $ref: '#/components/schemas/Error'
     Unauthorized:
       description: Clé absente ou invalide
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
+      content: *id001
     TooManyRequests:
       description: Quota dépassé (voir l'en-tête Retry-After)
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
+      content: *id001

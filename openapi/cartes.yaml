@@ -1,0 +1,135 @@
+# Généré depuis portal/assets/catalog.js par tools/generer_docs.py.
+openapi: 3.1.0
+info:
+  title: CEGIT – Cartes
+  version: 0.2.0
+  description: 'Fonds de plan OpenStreetMap et styles aux couleurs CEGIT pour vos sites, QGIS et QWC2.
+
+
+    Statut : Prototype. Exemples de réponses fictifs.'
+  contact:
+    name: CEGIT
+    url: https://cegitgroup.com/fr
+    email: api@cegitgroup.com
+servers:
+- url: https://api.cegitgroup.com
+  description: Production (cible)
+- url: https://api-preprod.cegitgroup.com
+  description: Préproduction
+security:
+- apiKey: []
+tags:
+- name: Cartes
+  description: Cartographie
+paths:
+  /v1/tiles/{style}/style.json:
+    get:
+      summary: Style de carte
+      description: Style MapLibre prêt à l'emploi.
+      operationId: v1_tiles_style_style_json_get
+      tags:
+      - Cartes
+      responses:
+        '200':
+          description: Succès
+          content:
+            application/json:
+              example:
+                version: 8
+                name: cegit-clair
+                sources:
+                  cegit:
+                    type: vector
+                    tiles:
+                    - https://api.cegitgroup.com/v1/tiles/{z}/{x}/{y}.pbf
+                layers: '[…]'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+      parameters:
+      - name: style
+        in: path
+        required: true
+        description: osm, cegit-clair, cegit-sombre (texte)
+        schema:
+          type: string
+        example: cegit-clair
+  /v1/tiles/{style}/{z}/{x}/{y}.png:
+    get:
+      summary: Tuile raster
+      description: Tuiles 256 px, compatibles Leaflet et QGIS (XYZ).
+      operationId: v1_tiles_style_z_x_y_png_get
+      tags:
+      - Cartes
+      responses:
+        '200':
+          description: Succès
+          content:
+            application/json:
+              example:
+                contenu: image/png
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+      parameters:
+      - name: style
+        in: path
+        required: true
+        description: Style (texte)
+        schema:
+          type: string
+        example: osm
+      - name: z
+        in: path
+        required: true
+        description: Zoom (entier)
+        schema:
+          type: integer
+        example: '10'
+      - name: x
+        in: path
+        required: true
+        description: Colonne (entier)
+        schema:
+          type: integer
+        example: '461'
+      - name: y
+        in: path
+        required: true
+        description: Ligne (entier)
+        schema:
+          type: integer
+        example: '470'
+components:
+  securitySchemes:
+    apiKey:
+      type: apiKey
+      in: header
+      name: X-API-Key
+  schemas:
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+  responses:
+    BadRequest:
+      description: Paramètre manquant ou invalide
+      content: &id001
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Unauthorized:
+      description: Clé absente ou invalide
+      content: *id001
+    TooManyRequests:
+      description: Quota dépassé (voir l'en-tête Retry-After)
+      content: *id001

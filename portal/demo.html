@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Démos API CEGIT</title>
+<meta name="description" content="Démonstrations cartographiques des API CEGIT sur fond OpenStreetMap.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@400;500;700&family=Ubuntu+Mono:wght@400;700&family=Open+Sans:wght@400;600;700&display=swap">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css">
+<link rel="stylesheet" href="assets/cegit.css">
+<link rel="stylesheet" href="assets/demo.css">
+</head>
+<body class="demo">
+<div id="map" aria-label="Carte"></div>
+
+<div class="switcher">
+  <button type="button" id="sw-btn" aria-haspopup="true" aria-expanded="false" aria-controls="sw-menu">
+    <span class="sw-mark" id="sw-mark"></span><span id="sw-name">API</span><span id="sw-chev"></span>
+  </button>
+  <div class="sw-menu" id="sw-menu" hidden>
+    <a class="sw-back" href="index.html#catalogue" id="sw-back"></a>
+    <div id="sw-list"></div>
+  </div>
+</div>
+
+<nav class="vtabs" id="tabs" aria-label="Fonctions de l'API"></nav>
+
+<aside class="side" id="side" aria-label="Paramètres et résultats">
+  <div class="side-head" id="head"></div>
+  <div class="side-body" id="body"></div>
+</aside>
+
+<section class="vcard" id="vcard" hidden aria-live="polite"></section>
+
+<div class="busy" id="busy" hidden><span></span>Calcul en cours…</div>
+<div class="toast" id="toast" role="status" hidden></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+<script src="assets/catalog.js"></script>
+<script src="assets/common.js"></script>
+<script src="assets/geo.js"></script>
+<script src="assets/demo.js"></script>
+</body>
+</html>

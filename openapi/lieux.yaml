@@ -1,0 +1,143 @@
+# Généré depuis portal/assets/catalog.js par tools/generer_docs.py.
+openapi: 3.1.0
+info:
+  title: CEGIT – Lieux
+  version: 0.2.0
+  description: 'Recherchez marchés, mosquées, gares routières, banques, administrations et autres points d''intérêt.
+
+
+    Statut : Bêta. Exemples de réponses fictifs.'
+  contact:
+    name: CEGIT
+    url: https://cegitgroup.com/fr
+    email: api@cegitgroup.com
+servers:
+- url: https://api.cegitgroup.com
+  description: Production (cible)
+- url: https://api-preprod.cegitgroup.com
+  description: Préproduction
+security:
+- apiKey: []
+tags:
+- name: Lieux
+  description: Référentiel CEGIT
+paths:
+  /v1/poi/nearby:
+    get:
+      summary: Points d'intérêt autour d'une adresse
+      description: Filtrage par type et par nom.
+      operationId: v1_poi_nearby_get
+      tags:
+      - Lieux
+      responses:
+        '200':
+          description: Succès
+          content:
+            application/json:
+              example:
+                items:
+                - nom: Marché Central de Thiès
+                  type: marché
+                  distance_m: 640
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+      parameters:
+      - name: lat
+        in: query
+        required: true
+        description: Latitude (décimal)
+        schema:
+          type: number
+        example: '14.791'
+      - name: lon
+        in: query
+        required: true
+        description: Longitude (décimal)
+        schema:
+          type: number
+        example: '-16.9256'
+      - name: type
+        in: query
+        required: false
+        description: marche, banque, gare_routiere… (texte)
+        schema:
+          type: string
+        example: marche
+      - name: radius_m
+        in: query
+        required: false
+        description: Rayon (décimal)
+        schema:
+          type: number
+        example: '2000'
+  /v1/poi/by-boundary:
+    post:
+      summary: Points d'intérêt dans un polygone
+      description: Géométrie GeoJSON en WGS 84.
+      operationId: v1_poi_by_boundary_post
+      tags:
+      - Lieux
+      responses:
+        '200':
+          description: Succès
+          content:
+            application/json:
+              example:
+                total: 12
+                items:
+                - nom: Banque (exemple)
+                  type: banque
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                geometry:
+                  type: string
+                  description: Polygone
+                  example: '{…}'
+                type:
+                  type: string
+                  description: Type
+                  example: banque
+              required:
+              - geometry
+components:
+  securitySchemes:
+    apiKey:
+      type: apiKey
+      in: header
+      name: X-API-Key
+  schemas:
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+  responses:
+    BadRequest:
+      description: Paramètre manquant ou invalide
+      content: &id001
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Unauthorized:
+      description: Clé absente ou invalide
+      content: *id001
+    TooManyRequests:
+      description: Quota dépassé (voir l'en-tête Retry-After)
+      content: *id001

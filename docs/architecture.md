@@ -10,13 +10,13 @@ flowchart LR
   G <-->|OAuth2 / OIDC| K[Keycloak]
   G --> F[Services FastAPI<br/>API métier]
   G --> O[pygeoapi<br/>OGC API Features]
-  G --> PE[Pelias<br/>géocodage]
-  G --> V[Valhalla<br/>itinéraires, isochrones]
+  G --> PE[Nominatim et Photon<br/>géocodage, suggestions]
+  G --> V[OSRM et Valhalla<br/>itinéraires, isochrones]
   G --> M[Martin<br/>tuiles vectorielles]
   F --> DB[(PostgreSQL / PostGIS)]
   O --> DB
   M --> DB
-  PE --> ES[(OpenSearch)]
+  PE --> DB
   V --> OSM[(Graphe OSM Sénégal)]
 ```
 
@@ -27,7 +27,7 @@ flowchart LR
 | Passerelle d'API | Clés, quotas, journalisation | Apache APISIX (Apache-2.0), Kong OSS (Apache-2.0) |
 | Identité | Comptes, OAuth2, rôles | Keycloak (Apache-2.0) |
 | Services | Logique métier et OpenAPI | FastAPI (MIT), pygeoapi (MIT), pg_featureserv (Apache-2.0) |
-| Moteurs spécialisés | Géocodage, routage, tuiles, rasters | Pelias (MIT), Valhalla (MIT), Martin (Apache-2.0), TiTiler (MIT) |
+| Moteurs spécialisés | Géocodage, routage, tuiles, rasters | Nominatim (GPL-2.0), Photon (Apache-2.0), OSRM (BSD-2), Valhalla (MIT), Martin (Apache-2.0), TiTiler (MIT) |
 | Données | Stockage et traitements | PostgreSQL / PostGIS (PostgreSQL / GPL-2), GDAL (MIT) |
 | Portail et documentation | Cette interface, spécifications | OpenAPI 3.1 (Apache-2.0), Redoc (MIT) |
 | Exploitation | Déploiement, supervision | Docker Compose (Apache-2.0), Prometheus (Apache-2.0), Grafana (AGPL-3.0) |
@@ -45,6 +45,6 @@ flowchart LR
 
 | Environnement | Adresse | Usage |
 |---|---|---|
-| Démonstration | GitHub Pages | Portail seul, réponses simulées |
+| Démonstration | GitHub Pages | Portail, démos sur les serveurs publics OSM, console simulée |
 | Préproduction | api-preprod.cegitgroup.com | Tests internes et clients pilotes |
 | Production | api.cegitgroup.com | Clients |

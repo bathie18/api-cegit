@@ -1,0 +1,113 @@
+# Généré depuis portal/assets/catalog.js par tools/generer_docs.py.
+openapi: 3.1.0
+info:
+  title: CEGIT – Géolocalisation
+  version: 0.2.0
+  description: 'Position approximative d''une adresse IP ou d''un point d''accès Wi-Fi.
+
+
+    Statut : En spécification. Exemples de réponses fictifs.'
+  contact:
+    name: CEGIT
+    url: https://cegitgroup.com/fr
+    email: api@cegitgroup.com
+servers:
+- url: https://api.cegitgroup.com
+  description: Production (cible)
+- url: https://api-preprod.cegitgroup.com
+  description: Préproduction
+security:
+- apiKey: []
+tags:
+- name: Géolocalisation
+  description: Référentiel CEGIT
+paths:
+  /v1/geolocation/ip:
+    get:
+      summary: Position d'une adresse IP
+      description: Ville, pays et précision estimée.
+      operationId: v1_geolocation_ip_get
+      tags:
+      - Géolocalisation
+      responses:
+        '200':
+          description: Succès
+          content:
+            application/json:
+              example:
+                ip: 41.82.10.20
+                ville: Dakar
+                pays: SN
+                precision_km: 25
+                note: Donnée de démonstration
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+      parameters:
+      - name: ip
+        in: query
+        required: true
+        description: Adresse IP (IPv4)
+        schema:
+          type: string
+        example: 41.82.10.20
+  /v1/geolocation/wifi:
+    get:
+      summary: Position d'un point d'accès Wi-Fi
+      description: À partir de l'adresse MAC du point d'accès.
+      operationId: v1_geolocation_wifi_get
+      tags:
+      - Géolocalisation
+      responses:
+        '200':
+          description: Succès
+          content:
+            application/json:
+              example:
+                mac: 00:1A:2B:3C:4D:5E
+                precision_m: 60
+                note: Donnée de démonstration
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+      parameters:
+      - name: mac
+        in: query
+        required: true
+        description: Adresse MAC (texte)
+        schema:
+          type: string
+        example: 00:1A:2B:3C:4D:5E
+components:
+  securitySchemes:
+    apiKey:
+      type: apiKey
+      in: header
+      name: X-API-Key
+  schemas:
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+  responses:
+    BadRequest:
+      description: Paramètre manquant ou invalide
+      content: &id001
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Unauthorized:
+      description: Clé absente ou invalide
+      content: *id001
+    TooManyRequests:
+      description: Quota dépassé (voir l'en-tête Retry-After)
+      content: *id001

@@ -1,0 +1,97 @@
+# Généré depuis portal/assets/catalog.js par tools/generer_docs.py.
+openapi: 3.1.0
+info:
+  title: CEGIT – Écoles
+  version: 0.2.0
+  description: 'Établissements scolaires à proximité : type, cycle, distance et informations de la carte scolaire.
+
+
+    Statut : Bêta. Exemples de réponses fictifs.'
+  contact:
+    name: CEGIT
+    url: https://cegitgroup.com/fr
+    email: api@cegitgroup.com
+servers:
+- url: https://api.cegitgroup.com
+  description: Production (cible)
+- url: https://api-preprod.cegitgroup.com
+  description: Préproduction
+security:
+- apiKey: []
+tags:
+- name: Écoles
+  description: Module CartoScol
+paths:
+  /v1/schools/nearby:
+    get:
+      summary: Écoles à proximité
+      description: Classées par distance.
+      operationId: v1_schools_nearby_get
+      tags:
+      - Écoles
+      responses:
+        '200':
+          description: Succès
+          content:
+            application/json:
+              example:
+                items:
+                - nom: Lycée Malick Sy
+                  cycle: secondaire
+                  statut: public
+                  distance_m: 820
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+      parameters:
+      - name: lat
+        in: query
+        required: true
+        description: Latitude (décimal)
+        schema:
+          type: number
+        example: '14.791'
+      - name: lon
+        in: query
+        required: true
+        description: Longitude (décimal)
+        schema:
+          type: number
+        example: '-16.9256'
+      - name: cycle
+        in: query
+        required: false
+        description: elementaire, moyen, secondaire (texte)
+        schema:
+          type: string
+        example: ''
+components:
+  securitySchemes:
+    apiKey:
+      type: apiKey
+      in: header
+      name: X-API-Key
+  schemas:
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+  responses:
+    BadRequest:
+      description: Paramètre manquant ou invalide
+      content: &id001
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Unauthorized:
+      description: Clé absente ou invalide
+      content: *id001
+    TooManyRequests:
+      description: Quota dépassé (voir l'en-tête Retry-After)
+      content: *id001
