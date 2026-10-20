@@ -1,5 +1,9 @@
 # Journal des modifications
 
+## 0.2.1 (2026-10)
+
+- Démo Adresses : saisie semi-automatique des communes et localités, emprise dessinée ou collée visible avant la recherche, zoom sur l'adresse au clic, export CSV de la liste.
+
 ## 0.2.0 (2026-10)
 
 - Catalogue étendu à 25 API adaptées au Sénégal, inspiré du portail Precisely.

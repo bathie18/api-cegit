@@ -130,7 +130,7 @@
 
   function renderTab() {
     const d = DEMOS[S.api.id], t = d.tabs[S.tab];
-    res.clearLayers(); S.run++;
+    res.clearLayers(); clearPreview(); S.run++;
     document.body.classList.toggle("card-mode", !!d.card);
     $("#vcard").hidden = !d.card;
     if (d.card) { t.render($("#vcard")); setTimeout(() => map.invalidateSize(), 50); return; }
@@ -208,9 +208,17 @@
   });
 
   /* ---------- Dessin de polygone ---------- */
-  let drawLine = null;
+  let drawLine = null, previewPoly = null;
+  function clearPreview() { if (previewPoly) { map.removeLayer(previewPoly); previewPoly = null; } }
+  function showPreview(poly, zoom) {
+    clearPreview();
+    if (!poly || poly.length < 3) return;
+    previewPoly = L.polygon(poly, { color: ORANGE, weight: 2.5, fillColor: ORANGE, fillOpacity: 0.12 }).addTo(map);
+    if (zoom) fit(previewPoly.getBounds());
+  }
   function startDraw(onDone) {
-    stopDraw(); S.draw = { pts: [], onDone };
+    stopDraw(); clearPreview(); S.draw = { pts: [], onDone };
+    const ta = $("#poly-coords"); if (ta) ta.value = "";
     document.body.classList.add("map-draw");
     toast("Cliquez sur la carte pour placer les sommets, puis « Terminer ».");
   }
@@ -224,6 +232,7 @@
     const d = S.draw; S.draw = null;
     document.body.classList.remove("map-draw");
     if (drawLine) { map.removeLayer(drawLine); drawLine = null; }
+    if (d && d.pts.length >= 3) showPreview(d.pts);
     if (finish && d && d.onDone) d.onDone(d.pts);
   }
   function polyHeader(extra) {
@@ -231,15 +240,25 @@
       ${extra || ""}
       <div class="actions"><button class="btn btn-ghost btn-sm" type="button" id="poly-draw" style="color:#FFFFFF;border-color:rgba(255,255,255,.4)">${svg("draw", 16)} Dessiner</button><button class="btn btn-ghost btn-sm" type="button" id="poly-end" style="color:#FFFFFF;border-color:rgba(255,255,255,.4)">Terminer</button><button class="btn btn-primary btn-sm" type="button" id="poly-go">${svg("search", 16)} Recherche</button></div>`;
   }
-  function readPoly() {
+  function parsePoly(txt) {
     try {
-      const a = JSON.parse($("#poly-coords").value);
-      if (!Array.isArray(a) || a.length < 3) throw 0;
-      return a.map(c => [+c[1], +c[0]]);
-    } catch (_) { toast("Dessinez ou collez au moins trois sommets."); return null; }
+      let a = JSON.parse(txt);
+      if (a && a.type === "Polygon") a = a.coordinates[0];
+      else if (a && a.type === "Feature" && a.geometry && a.geometry.type === "Polygon") a = a.geometry.coordinates[0];
+      else if (Array.isArray(a) && Array.isArray(a[0]) && Array.isArray(a[0][0])) a = a[0];
+      if (!Array.isArray(a) || a.length < 3) return null;
+      const pts = a.map(c => [+c[1], +c[0]]);
+      return pts.every(p => isFinite(p[0]) && isFinite(p[1]) && Math.abs(p[0]) <= 90 && Math.abs(p[1]) <= 180) ? pts : null;
+    } catch (_) { return null; }
+  }
+  function readPoly() {
+    const p = parsePoly($("#poly-coords").value);
+    if (!p) toast("Dessinez ou collez au moins trois sommets (longitude, latitude).");
+    return p;
   }
   function bindPoly(onGo) {
     $("#poly-draw").onclick = () => startDraw();
+    $("#poly-coords").addEventListener("input", debounce(() => { if (S.draw) return; const p = parsePoly($("#poly-coords").value); if (p) showPreview(p, true); else clearPreview(); }, 400));
     $("#poly-end").onclick = () => { if (S.draw && S.draw.pts.length >= 3) stopDraw(); else toast("Placez au moins trois sommets."); };
     $("#poly-go").onclick = () => { if (S.draw) stopDraw(); const poly = readPoly(); if (poly) onGo(poly); };
   }
@@ -456,14 +475,14 @@
     const bb = poly.reduce((b, p) => [Math.min(b[0], p[0]), Math.min(b[1], p[1]), Math.max(b[2], p[0]), Math.max(b[3], p[1])], [90, 180, -90, -180]);
     let items = [], src = "osm";
     try {
-      const ql = `[out:json][timeout:25];(nwr["addr:street"](${polyQL(poly)});way["highway"]["name"](${polyQL(poly)}););out center tags 300;`;
+      const ql = `[out:json][timeout:25];(nwr["addr:street"](${polyQL(poly)});way["highway"]["name"](${polyQL(poly)}););out center tags 500;`;
       const els = await G.overpass(ql);
       const seen = new Set();
       for (const e of els) {
         const t = e.tags || {};
         const lab = t["addr:street"] ? [t["addr:housenumber"], t["addr:street"]].filter(Boolean).join(" ") : t.name;
         if (!lab || seen.has(lab)) continue; seen.add(lab);
-        items.push({ label: lab, kind: t["addr:street"] ? "adresse" : "voie", pos: G.elPos(e) });
+        items.push({ label: lab, kind: t["addr:street"] ? "adresse" : "voie", pos: G.elPos(e), quartier: t["addr:suburb"] || t["addr:quarter"] || "", ville: t["addr:city"] || "" });
       }
       if (!items.length) throw 0;
     } catch (_) {
@@ -472,39 +491,122 @@
       const names = ["Rue", "Avenue", "Allée", "Boulevard"];
       for (let i = 0; i < 20; i++) {
         let pos; do { pos = [bb[0] + r() * (bb[2] - bb[0]), bb[1] + r() * (bb[3] - bb[1])]; } while (!G.inPoly(pos, poly) && r() < 0.95);
-        items.push({ label: `${names[i % 4]} ${String.fromCharCode(65 + (i % 26))}-${10 + i} (exemple)`, kind: "voie", pos });
+        items.push({ label: `${names[i % 4]} ${String.fromCharCode(65 + (i % 26))}-${10 + i} (exemple)`, kind: "voie", pos, quartier: "", ville: "" });
       }
     }
-    const shown = items.slice(0, 20);
-    shown.forEach((x, i) => L.marker(x.pos, { icon: numIcon(i + 1) }).addTo(res));
-    return srcTag(src) + `<p class="r-title">${esc(label)}</p>` +
-      (items.length > 20 ? `<p class="note">Seules 20 adresses sont affichées à titre d'exemple ; la zone en compte ${nf(items.length)} dans les données ouvertes.</p>` : "") +
-      `<ol class="list-num">${shown.map((x, i) => `<li><span class="num">${i + 1}</span><span>${esc(x.label)}</span><em>${x.kind}</em></li>`).join("")}</ol>`;
+    renderAddresses(items, label, src);
   }
+  function renderAddresses(items, label, src) {
+    const shown = items.slice(0, 20);
+    const markers = shown.map((x, i) => L.marker(x.pos, { icon: numIcon(i + 1), title: x.label }).bindPopup(`<b>${esc(x.label)}</b><br>${x.pos[0].toFixed(6)}, ${x.pos[1].toFixed(6)}`).addTo(res));
+    $("#out").innerHTML = srcTag(src) + `<p class="r-title">${esc(label)}</p>` +
+      `<div class="out-actions"><span>${nf(items.length)} adresse${items.length > 1 ? "s" : ""} trouvée${items.length > 1 ? "s" : ""}</span><button class="btn btn-dark btn-sm" type="button" id="csv">Exporter en CSV</button></div>` +
+      (items.length > 20 ? `<p class="note">Les 20 premières adresses sont affichées ; l'export CSV contient les ${nf(items.length)}.</p>` : "") +
+      `<ol class="list-num">${shown.map((x, i) => `<li data-i="${i}" tabindex="0" title="Zoomer sur cette adresse"><span class="num">${i + 1}</span><span>${esc(x.label)}</span><em>${x.kind}</em></li>`).join("")}</ol>`;
+    const zoomTo = i => {
+      document.querySelectorAll("#out .list-num li").forEach(li => li.classList.toggle("on", +li.dataset.i === i));
+      map.setView(shown[i].pos, 18); markers[i].openPopup();
+      if (window.matchMedia("(max-width:760px)").matches) document.getElementById("map").scrollIntoView({ block: "start" });
+    };
+    document.querySelectorAll("#out .list-num li").forEach(li => {
+      li.onclick = () => zoomTo(+li.dataset.i);
+      li.onkeydown = e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); zoomTo(+li.dataset.i); } };
+    });
+    markers.forEach((m, i) => m.on("click", () => { document.querySelectorAll("#out .list-num li").forEach(li => li.classList.toggle("on", +li.dataset.i === i)); document.querySelector(`#out .list-num li[data-i="${i}"]`)?.scrollIntoView({ block: "nearest" }); }));
+    $("#csv").onclick = () => exportCSV(items, label, src);
+  }
+  function exportCSV(items, label, src) {
+    const q = v => { const t = String(v == null ? "" : v); return /[";\n]/.test(t) ? `"${t.replace(/"/g, '""')}"` : t; };
+    const rows = [["numero", "libelle", "type", "quartier", "ville", "latitude", "longitude", "zone", "source"]]
+      .concat(items.map((x, i) => [i + 1, x.label, x.kind, x.quartier, x.ville, x.pos[0].toFixed(6), x.pos[1].toFixed(6), label, src === "osm" ? "OpenStreetMap (ODbL)" : "Démonstration"]));
+    const csv = "﻿" + rows.map(r => r.map(q).join(";")).join("\r\n");
+    const slug = G.norm(label).replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 40) || "zone";
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
+    a.download = `adresses-${slug}.csv`;
+    document.body.appendChild(a); a.click();
+    setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+    toast(`${nf(items.length)} adresses exportées.`);
+  }
+  /* Suggestions de communes et localités du Sénégal */
+  const PLACE_TYPES = /^(city|town|village|suburb|neighbourhood|quarter|hamlet|municipality|locality|borough)$/;
+  async function suggestCommunes(q, region, dept) {
+    const n = G.norm(q), out = [];
+    try {
+      const r = await G.fetchJSON(`${G.SRC.photon}?q=${encodeURIComponent(q)}&lang=fr&limit=15&osm_tag=place&bbox=-17.6,12.25,-11.3,16.7`, null, 5000);
+      for (const f of r.features) {
+        const p = f.properties;
+        if ((p.countrycode || "").toUpperCase() !== "SN" || !PLACE_TYPES.test(p.osm_value || "")) continue;
+        out.push({ name: p.name, lat: f.geometry.coordinates[1], lon: f.geometry.coordinates[0], dept: (p.county || "").replace(/^Département de /, ""), region: (p.state || "").replace(/^Région de /, ""), type: p.osm_value });
+      }
+    } catch (_) {}
+    if (!out.length) G.GAZ.filter(g => G.norm(g[0]).includes(n)).forEach(g => out.push({ name: g[0], lat: g[1], lon: g[2], dept: g[4], region: g[3], type: g[5], demo: true }));
+    const inSel = x => (!region || G.norm(x.region).includes(G.norm(region))) && (!dept || G.norm(x.dept).includes(G.norm(dept)));
+    const seen = new Set();
+    return out.filter(x => { const k = x.name + "|" + x.dept; if (seen.has(k)) return false; seen.add(k); return true; })
+      .sort((a, b) => (inSel(b) - inSel(a)) || (G.norm(a.name).startsWith(n) ? -1 : 1)).slice(0, 8);
+  }
+  const TYPE_FR = { city: "ville", town: "ville", village: "village", suburb: "quartier", neighbourhood: "quartier", quarter: "quartier", hamlet: "hameau", municipality: "commune", locality: "lieu-dit", borough: "arrondissement", ville: "ville" };
   DEMOS["adresses"] = { tabs: [
     { label: "Par nom de limite", render() {
       head(`<form id="ad" autocomplete="off"><div class="field"><label for="ad-p">Pays</label><select id="ad-p" disabled><option>Sénégal</option></select></div><div class="row"><div class="field"><label for="ad-r">Région</label><select id="ad-r">${regionOptions("Dakar")}</select></div><div class="field"><label for="ad-d">Département</label><select id="ad-d">${deptOptions("Dakar", "Dakar", "Toute la région")}</select></div></div>
-        <div class="field"><label for="ad-c">Commune (facultatif)</label><input id="ad-c" placeholder="Ex. Médina"></div><div class="actions"><button class="btn btn-primary btn-sm" type="submit">${svg("search", 16)} Recherche</button></div></form>`);
+        <div class="field ac"><label for="ad-c">Commune ou localité (facultatif)</label><input id="ad-c" placeholder="Commencez à saisir : Médina, Yoff, Saly…" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="ad-list"><ul class="ac-list" id="ad-list" role="listbox" hidden></ul></div>
+        <div class="actions"><button class="btn btn-primary btn-sm" type="submit">${svg("search", 16)} Recherche</button></div></form>`);
       body(`<div id="out">${empty("mappin", "Choisissez une limite administrative pour lister ses adresses.")}</div>`);
+      let picked = null, items = [], active = -1, token = 0;
+      const input = $("#ad-c"), list = $("#ad-list");
+      const close = () => { list.hidden = true; input.setAttribute("aria-expanded", "false"); active = -1; };
+      const choose = x => {
+        picked = x; input.value = x.name; close();
+        const reg = Object.keys(G.REGIONS).find(r => G.norm(x.region).includes(G.norm(r)));
+        if (reg) {
+          $("#ad-r").value = reg;
+          const dep = G.REGIONS[reg].find(d => G.norm(x.dept).includes(G.norm(d)));
+          $("#ad-d").innerHTML = deptOptions(reg, dep || "", "Toute la région");
+        }
+        res.clearLayers(); L.marker([x.lat, x.lon], { icon: pinIcon() }).addTo(res); map.setView([x.lat, x.lon], 13);
+      };
+      const paint = () => list.querySelectorAll("li").forEach((li, i) => li.setAttribute("aria-selected", String(i === active)));
+      input.addEventListener("input", debounce(async () => {
+        picked = null;
+        const q = input.value.trim(), my = ++token;
+        if (q.length < 2) { close(); return; }
+        const r = await suggestCommunes(q, $("#ad-r").value, $("#ad-d").value);
+        if (my !== token) return;
+        items = r; active = -1;
+        list.innerHTML = r.length ? r.map((x, i) => `<li role="option" data-i="${i}">${esc(x.name)}<small>${esc([TYPE_FR[x.type] || x.type, x.dept, x.region].filter(Boolean).join(" · "))}</small></li>`).join("") : `<li aria-disabled="true"><small>Aucune commune trouvée</small></li>`;
+        list.hidden = false; input.setAttribute("aria-expanded", "true");
+      }, 250));
+      input.addEventListener("keydown", e => {
+        if (list.hidden || !items.length) return;
+        if (e.key === "ArrowDown") { e.preventDefault(); active = (active + 1) % items.length; paint(); }
+        else if (e.key === "ArrowUp") { e.preventDefault(); active = (active - 1 + items.length) % items.length; paint(); }
+        else if (e.key === "Enter" && active >= 0) { e.preventDefault(); choose(items[active]); }
+        else if (e.key === "Escape") close();
+      });
+      input.addEventListener("blur", () => setTimeout(close, 180));
+      list.addEventListener("mousedown", e => { const li = e.target.closest("li[data-i]"); if (li) { e.preventDefault(); choose(items[+li.dataset.i]); } });
       $("#ad-r").onchange = e => { $("#ad-d").innerHTML = deptOptions(e.target.value, "", "Toute la région"); };
       $("#ad").addEventListener("submit", async e => {
         e.preventDefault();
-        const name = $("#ad-c").value.trim() ? `${$("#ad-c").value.trim()}, ${$("#ad-d").value || $("#ad-r").value}` : ($("#ad-d").value ? `Département de ${$("#ad-d").value}` : `Région de ${$("#ad-r").value}`);
+        const c = input.value.trim();
+        const name = c ? `${c}, ${$("#ad-d").value || $("#ad-r").value}` : ($("#ad-d").value ? `Département de ${$("#ad-d").value}` : `Région de ${$("#ad-r").value}`);
         res.clearLayers(); busy(true);
-        const b = await G.boundaryByName(name, "sn");
+        const center = picked && picked.name === c ? picked : null;
+        const b = await G.boundaryByName(name, "sn", center);
         const lyr = drawGeoJSON(b.geojson, BLUE);
         if (lyr) fit(lyr.getBounds());
         const poly = geojsonToPoly(b.geojson);
-        $("#out").innerHTML = poly ? await listAddresses(poly, b.label) : `<p class="note">Limite introuvable.</p>`;
+        if (poly) await listAddresses(poly, b.label.split(",").slice(0, 2).join(",")); else $("#out").innerHTML = `<p class="note">Limite introuvable.</p>`;
         busy(false);
       });
     } },
     { label: "Par limite", render() {
       head(polyHeader());
-      body(`<div id="out">${empty("draw", "Dessinez une zone sur la carte (Dessiner, puis cliquez les sommets) ou collez ses coordonnées.")}</div>`);
+      body(`<div id="out">${empty("draw", "Dessinez une zone sur la carte (Dessiner, puis cliquez les sommets et Terminer) ou collez ses coordonnées : l'emprise s'affiche avant la recherche.")}</div>`);
       bindPoly(async poly => {
-        res.clearLayers(); L.polygon(poly, { color: BLUE, weight: 2, fillOpacity: 0.15 }).addTo(res); fit(poly);
-        busy(true); $("#out").innerHTML = await listAddresses(poly, "Adresses dans la zone dessinée"); busy(false);
+        res.clearLayers(); showPreview(poly, true);
+        busy(true); await listAddresses(poly, "Zone dessinée"); busy(false);
       });
     } }
   ] };
@@ -795,7 +897,7 @@
       head(polyHeader(`<div class="field"><label for="lp-t">Type</label>${poiSelect("lp-t")}</div>`));
       body(`<div id="out">${empty("draw", "Dessinez une zone sur la carte, puis lancez la recherche.")}</div>`);
       bindPoly(async poly => {
-        res.clearLayers(); L.polygon(poly, { color: BLUE, weight: 2, fillOpacity: 0.12 }).addTo(res); fit(poly);
+        res.clearLayers(); showPreview(poly, true);
         busy(true); $("#out").innerHTML = await poiRun(poiFilters($("#lp-t").value, ""), polyQL(poly), null); busy(false);
       });
     } },

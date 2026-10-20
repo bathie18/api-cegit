@@ -245,7 +245,7 @@
   function elPos(e) { return e.center ? [e.center.lat, e.center.lon] : [e.lat, e.lon]; }
 
   /* ---------- Limites ---------- */
-  async function boundaryByName(name, cc) {
+  async function boundaryByName(name, cc, center) {
     try {
       const u = `${SRC.nominatim}/search?format=jsonv2&polygon_geojson=1&polygon_threshold=0.001&accept-language=fr&limit=5&q=${encodeURIComponent(name)}&countrycodes=${(cc || "sn").toLowerCase()}`;
       const res = await fetchJSON(u);
@@ -253,8 +253,8 @@
       if (!hit) throw new Error("aucune limite");
       return { label: hit.display_name, geojson: hit.geojson, lat: +hit.lat, lon: +hit.lon, src: "osm" };
     } catch (_) {
-      const g = GAZ.find(x => norm(name).includes(norm(x[0]))) || GAZ[0];
-      const ring = circle([g[1], g[2]], 6000, 40, 0.25).map(p => [p[1], p[0]]);
+      const g = center ? [center.name, center.lat, center.lon] : (GAZ.find(x => norm(name).includes(norm(x[0]))) || GAZ[0]);
+      const ring = circle([g[1], g[2]], center ? 2500 : 6000, 40, 0.25).map(p => [p[1], p[0]]);
       ring.push(ring[0]);
       return { label: `${g[0]} (emprise approximative)`, geojson: { type: "Polygon", coordinates: [ring] }, lat: g[1], lon: g[2], src: "demo" };
     }
